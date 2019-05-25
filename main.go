@@ -41,7 +41,13 @@ func main() {
 
 	app.Action = func(c *cli.Context) {
 		db := datastore.Database{Database: "./test.db"}
-		dbschema := []interface{}{proxy.History{}, proxy.Request{}, proxy.Response{}}
+		dbschema := []interface{}{
+			History{},
+			Request{},
+			RequestHeader{},
+			RequestData{},
+			Response{},
+		}
 		go func() {
 			for _, v := range dbschema {
 				db.Table = v
