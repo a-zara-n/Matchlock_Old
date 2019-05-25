@@ -108,13 +108,11 @@ func (c *connect) SetRequest(msg []byte) {
 	if s := c.request.Header.Get("Host"); s != "" {
 		host = s
 	}
-	c.request.URL.Host = host
-	c.request.URL.Path = startLine[1]
-	c.request.Method = startLine[0]
-	c.request.Proto = startLine[2]
+	c.request.URL.Host, c.request.URL.Path, c.request.Method, c.request.Proto =
+		host, startLine[1], startLine[0], startLine[2]
 	bodyStr := editReq[len(editReq)-1]
-	c.request.ContentLength = int64(len(bodyStr))
-	c.request.Body = ioutil.NopCloser(strings.NewReader(bodyStr))
+	c.request.ContentLength, c.request.Body =
+		int64(len(bodyStr)), ioutil.NopCloser(strings.NewReader(bodyStr))
 }
 
 var upgrader = &websocket.Upgrader{ReadBufferSize: socketBufferSize, WriteBufferSize: socketBufferSize}
