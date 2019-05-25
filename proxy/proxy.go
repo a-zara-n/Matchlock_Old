@@ -22,10 +22,8 @@ func (p *proxyInfo) Run() {
 	reschan := p.channels.Response
 	p.proxy.OnRequest().DoFunc(
 		func(r *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
-			if p.channels.IsForward {
-				reqchan.ProxToHMgSignal <- r
-				r = <-reqchan.ProxToHMgSignal
-			}
+			reqchan.ProxToHMgSignal <- r
+			r = <-reqchan.ProxToHMgSignal
 			return r, nil
 		})
 	p.proxy.OnResponse().DoFunc(func(r *http.Response, ctx *goproxy.ProxyCtx) *http.Response {
