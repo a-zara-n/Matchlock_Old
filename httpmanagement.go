@@ -1,10 +1,10 @@
 package main
 
 import (
-	"bytes"
-	"io/ioutil"
+	"io"
 	"reflect"
-	"strings"
+
+	"./extractor"
 
 	"./channel"
 )
@@ -14,27 +14,23 @@ type HTTPmanager struct {
 }
 
 func (h *HTTPmanager) Run() {
-	reqchan := h.channels.Request
-	reschan := h.channels.Response
-	histry := History{}
+	var (
+		bstr    string
+		reqchan = h.channels.Request
+		reschan = h.channels.Response
+		histry  = History{}
+		sepIO   = SeparationOfIOReadCloser
+	)
 	for {
 		select {
 		case req := <-reqchan.ProxToHMgSignal:
-			bufbody := new(bytes.Buffer)
-			bufbody.ReadFrom(req.Body)
-			bstr := bufbody.String()
-			req.Body = ioutil.NopCloser(strings.NewReader(bstr))
-
+			bstr, req.Body = sepIO(req.Body)
 			if h.channels.IsForward {
 				reqchan.HMgToHsSignal <- req
 				histry.SetIdentifier(GetSha1(req.URL.String()))
 				go histry.MemoryRequest(req, false, bstr)
 				creq := <-reqchan.HMgToHsSignal
-
-				bufbody = new(bytes.Buffer)
-				bufbody.ReadFrom(creq.Body)
-				bstr, creq.Body = bufbody.String(), ioutil.NopCloser(strings.NewReader(bstr))
-
+				bstr, creq.Body = sepIO(req.Body)
 				reqchan.ProxToHMgSignal <- creq
 				if reflect.DeepEqual(req, creq) != true {
 					go histry.MemoryRequest(creq, true, bstr)
@@ -45,16 +41,20 @@ func (h *HTTPmanager) Run() {
 				reqchan.ProxToHMgSignal <- req
 			}
 		case res := <-reschan.ProxToHMgSignal:
-			bufbody := new(bytes.Buffer)
-			bufbody.ReadFrom(res.Body)
-			bstr := bufbody.String()
-			res.Body = ioutil.NopCloser(strings.NewReader(bstr))
+			bstr, res.Body = sepIO(res.Body)
 			reschan.ProxToHMgSignal <- res
 			histry.MemoryResponse(res, bstr)
 			histry = History{}
 		}
 	}
 }
+
+func SeparationOfIOReadCloser(b io.ReadCloser) (string, io.ReadCloser) {
+	bstr := extractor.GetStringBody(b)
+	b = extractor.GetIOReadCloser(bstr)
+	return bstr, b
+}
+
 func NewHHTTPmanager(m *channel.Matchlock) *HTTPmanager {
 	return &HTTPmanager{channels: m}
 }
