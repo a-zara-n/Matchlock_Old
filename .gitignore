@@ -10,3 +10,6 @@
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
+
+# Eliminate SQLite "* .db" for HTTP history.
+*.db
