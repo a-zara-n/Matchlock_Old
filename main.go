@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -16,12 +17,20 @@ import (
 
 // server port
 var proxyPort = "8888"
+var title = `
+__  __       _       _     _            _    
+|  \/  | __ _| |_ ___| |__ | | ___   ___| | __
+| |\/| |/ _' | __/ __| '_ \| |/ _ \ / __| |/ /
+| |  | | (_| | || (__| | | | | (_) | (__|   < 
+|_|  |_|\__,_|\__\___|_| |_|_|\___/ \___|_|\_\
+===============================================
+`
 
 func main() {
 	// 基本情報の設定
 	app := cli.NewApp()
-	app.Name = "VulunScaner"
-	app.Usage = "It is a tool that can be used for vulnerability inspection when doing DevSecOps."
+	app.Name = title
+	app.Usage = "Matchlock is a web application vulnerability scanner"
 	app.Version = "β 0.0.1"
 	// オプション
 	app.Flags = []cli.Flag{
@@ -40,6 +49,7 @@ func main() {
 	hh := NewHHTTPmanager(m)
 
 	app.Action = func(c *cli.Context) {
+		fmt.Println(title)
 		db := datastore.Database{Database: "./test.db"}
 		dbschema := []interface{}{
 			History{},
