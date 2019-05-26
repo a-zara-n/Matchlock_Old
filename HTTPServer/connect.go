@@ -1,15 +1,11 @@
 package httpserver
 
 import (
-	"bytes"
-	"io/ioutil"
 	"log"
 	"net/http"
-	"sort"
-	"strings"
-	"unsafe"
 
 	"../channel"
+	"../extractor"
 	"github.com/gorilla/websocket"
 )
 
@@ -43,13 +39,14 @@ func (c *connect) Run() {
 			//退室
 			delete(c.clients, client)
 			close(client.send)
+
 		case msg := <-c.forward:
-			c.SetRequest(msg)
+			c.request = extractor.GetRequestByString(msg, c.request)
 			reqchan.HMgToHsSignal <- c.request
 			c.request = &http.Request{}
 		case r := <-reqchan.HMgToHsSignal:
 			c.request = r
-			ret := c.GetRequestByHeader(r)
+			ret := extractor.GetStringByRequest(r)
 			for client := range c.clients {
 				select {
 				case client.send <- []byte(ret):
@@ -60,59 +57,6 @@ func (c *connect) Run() {
 			}
 		}
 	}
-}
-
-func GetQuery(rq string) string {
-	if rq != "" {
-		return "?" + rq
-	}
-	return rq
-}
-
-func (c *connect) GetRequestByHeader(r *http.Request) string {
-	headerKey := []string{}
-	headerSlice := []string{}
-	for k := range r.Header {
-		headerKey = append(headerKey, k)
-	}
-	sort.Strings(headerKey)
-	for _, v := range headerKey {
-		h := strings.Join([]string{v, strings.Join(r.Header[v], ",")}, ": ")
-		headerSlice = append(headerSlice, h)
-	}
-	bufbody := new(bytes.Buffer)
-	bufbody.ReadFrom(r.Body)
-	return strings.Join([]string{
-		strings.Join([]string{r.Method, r.URL.Path, GetQuery(r.URL.RawQuery), r.Proto}, " "),
-		strings.Join(headerSlice, "\n"),
-		"",
-		bufbody.String(),
-	}, "\n")
-}
-
-func (c *connect) SetRequest(msg []byte) {
-	editReq := strings.Split(*(*string)(unsafe.Pointer(&msg)), "\n")
-	startLine := strings.Split(editReq[0], " ")
-	host := c.request.Host
-	c.request.Header = http.Header{}
-	for _, v := range editReq[1:] {
-		if v == "" {
-			break
-		}
-		headL := strings.Split(v, ": ")
-		if len(headL) <= 1 {
-			headL = strings.Split(v, ":")
-		}
-		c.request.Header.Add(headL[0], strings.Join(headL[1:], ":"))
-	}
-	if s := c.request.Header.Get("Host"); s != "" {
-		host = s
-	}
-	c.request.URL.Host, c.request.URL.Path, c.request.Method, c.request.Proto =
-		host, startLine[1], startLine[0], startLine[2]
-	bodyStr := editReq[len(editReq)-1]
-	c.request.ContentLength, c.request.Body =
-		int64(len(bodyStr)), ioutil.NopCloser(strings.NewReader(bodyStr))
 }
 
 var upgrader = &websocket.Upgrader{ReadBufferSize: socketBufferSize, WriteBufferSize: socketBufferSize}
