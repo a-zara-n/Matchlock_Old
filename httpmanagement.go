@@ -16,35 +16,38 @@ type HTTPmanager struct {
 func (h *HTTPmanager) Run() {
 	var (
 		bstr    string
+		reqH    History
+		resH    History
 		reqchan = h.channels.Request
 		reschan = h.channels.Response
-		histry  = History{}
 		sepIO   = SeparationOfIOReadCloser
 	)
 	for {
 		select {
 		case req := <-reqchan.ProxToHMgSignal:
+			reqH = History{}
 			bstr, req.Body = sepIO(req.Body)
 			if h.channels.IsForward {
 				reqchan.HMgToHsSignal <- req
-				histry.SetIdentifier(GetSha1(req.URL.String()))
-				go histry.MemoryRequest(req, false, bstr)
+				reqH.SetIdentifier(GetSha1(req.URL.String()))
+				go reqH.MemoryRequest(req, false, bstr)
 				creq := <-reqchan.HMgToHsSignal
 				bstr, creq.Body = sepIO(req.Body)
+				resH = reqH
 				reqchan.ProxToHMgSignal <- creq
 				if reflect.DeepEqual(req, creq) != true {
-					go histry.MemoryRequest(creq, true, bstr)
+					go reqH.MemoryRequest(creq, true, bstr)
 				}
 			} else {
-				histry.SetIdentifier(GetSha1(req.URL.String()))
-				go histry.MemoryRequest(req, false, bstr)
+				reqH.SetIdentifier(GetSha1(req.URL.String()))
+				go reqH.MemoryRequest(req, false, bstr)
+				resH = reqH
 				reqchan.ProxToHMgSignal <- req
 			}
 		case res := <-reschan.ProxToHMgSignal:
 			bstr, res.Body = sepIO(res.Body)
 			reschan.ProxToHMgSignal <- res
-			histry.MemoryResponse(res, bstr)
-			histry = History{}
+			resH.MemoryResponse(res, bstr)
 		}
 	}
 }
