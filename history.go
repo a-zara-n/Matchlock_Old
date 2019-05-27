@@ -57,6 +57,7 @@ func (r *Request) SetRequest(req *http.Request, bstr string) {
 			RequestHeader{
 				Identifier: r.Identifier,
 				IsEdit:     r.IsEdit,
+				Method:     req.Method,
 				Host:       req.Host,
 				Path:       req.URL.Path,
 			}
@@ -68,6 +69,7 @@ func (r *Request) SetRequest(req *http.Request, bstr string) {
 				RequestData{
 					Identifier: r.Identifier,
 					IsEdit:     r.IsEdit,
+					Method:     req.Method,
 					Host:       req.Host,
 					Path:       req.URL.Path,
 				}
@@ -80,10 +82,7 @@ func (r *Request) SetRequest(req *http.Request, bstr string) {
 		}
 	}
 
-	for _, datas := range [][]string{
-		strings.Split(req.URL.RawQuery, "&"),
-		strings.Split(bstr, "&"),
-	} {
+	for _, datas := range [][]string{strings.Split(req.URL.RawQuery, "&"), strings.Split(bstr, "&")} {
 		fordata(datas)
 	}
 	db.Table = Request{}
@@ -95,13 +94,33 @@ func (r *Request) SetRequest(req *http.Request, bstr string) {
 	r.TransferEncoding = strings.Join(req.TransferEncoding, ",")
 	db.Insert(r)
 }
-func (r *Request) GetRequest() {
 
+func (r *Request) GetHost() []Request {
+	db.Table = Request{}
+	reqdb := db.OpenDatabase()
+	var request []Request
+	reqdb.
+		Select("DISTINCT host,host").
+		Find(&request)
+	return request
+}
+
+func (r *Request) GetRequest(host string) []Request {
+	host = "%" + host + "%"
+	db.Table = Request{}
+	reqdb := db.OpenDatabase()
+	var request []Request
+	reqdb.
+		Select("DISTINCT method, url").
+		Where("host LIKE ?", host).
+		Find(&request)
+	return request
 }
 
 type RequestHeader struct {
 	gorm.Model
 	Identifier string
+	Method     string
 	Host       string
 	Path       string
 	Name       string
@@ -115,13 +134,22 @@ func (r *RequestHeader) SetHeader(name string, value string) {
 	db.Table = RequestHeader{}
 	db.Insert(r)
 }
-func (r *RequestHeader) GetHeader() {
-
+func (r *RequestHeader) GetHeader(host string) []RequestHeader {
+	host = "%" + host + "%"
+	db.Table = RequestHeader{}
+	reqdb := db.OpenDatabase()
+	var requestHeader []RequestHeader
+	reqdb.
+		Select("DISTINCT method, url").
+		Where("host LIKE ?", host).
+		Find(&requestHeader)
+	return requestHeader
 }
 
 type RequestData struct {
 	gorm.Model
 	Identifier string
+	Method     string
 	Host       string
 	Path       string
 	Name       string
