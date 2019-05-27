@@ -1,7 +1,6 @@
 package proxy
 
 import (
-	"fmt"
 	"net/http"
 	"regexp"
 
@@ -18,7 +17,7 @@ type proxyInfo struct {
 }
 
 func (p *proxyInfo) Run() {
-	var isHost bool
+	var isHost = []bool{}
 	p.proxy = goproxy.NewProxyHttpServer()
 	p.proxy.Verbose = false
 	//テストで配置
@@ -26,16 +25,16 @@ func (p *proxyInfo) Run() {
 	//	HandleConnect(goproxy.AlwaysMitm)
 	//を利用したいがうまく削除ができるか不明なので考慮する
 	AddWhiteList(`^[0-9a-zA-Z]*\.?(localhost)(\.+[0-9a-zA-Z]+)*$`)
-	AddWhiteList(`^[0-9a-zA-Z]*\.?(google)(\.+[0-9a-zA-Z]+)*$`)
+	//AddWhiteList(`^[0-9a-zA-Z]*\.?(google)(\.+[0-9a-zA-Z]+)*$`)
 	p.proxy.OnRequest().HandleConnect(goproxy.AlwaysMitm)
-
 	reqchan := p.channels.Request
 	reschan := p.channels.Response
 	p.proxy.OnRequest().DoFunc(
 		func(r *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
-			isHost = whitelistMatch(r.Host)
-			if isHost {
-				fmt.Println("hoge")
+			i := whitelistMatch(r.Host)
+			isHost = append(isHost, i)
+			if i {
+
 				reqchan.ProxToHMgSignal <- r
 				r = <-reqchan.ProxToHMgSignal
 			}
@@ -43,8 +42,11 @@ func (p *proxyInfo) Run() {
 		})
 	p.proxy.OnResponse().DoFunc(
 		func(r *http.Response, ctx *goproxy.ProxyCtx) *http.Response {
-			if isHost {
-				fmt.Println("foge")
+			i := isHost[0]
+			if len(isHost[1:]) > 0 {
+				isHost = isHost[1:]
+			}
+			if i {
 				reschan.ProxToHMgSignal <- r
 				r = <-reschan.ProxToHMgSignal
 			}
@@ -81,7 +83,7 @@ func UpdataWhiteList(domains []string) bool {
 }
 
 func whitelistMatch(host string) bool {
-	fmt.Println(host)
+
 	for _, d := range whitelist {
 		if check_regexp(d, host) {
 			return true
