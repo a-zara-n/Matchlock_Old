@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"reflect"
 
@@ -16,8 +17,7 @@ type HTTPmanager struct {
 func (h *HTTPmanager) Run() {
 	var (
 		bstr    string
-		reqH    History
-		resH    History
+		resH    = []History{}
 		reqchan = h.channels.Request
 		reschan = h.channels.Response
 		sepIO   = SeparationOfIOReadCloser
@@ -25,29 +25,34 @@ func (h *HTTPmanager) Run() {
 	for {
 		select {
 		case req := <-reqchan.ProxToHMgSignal:
-			reqH = History{}
+			history := History{}
+			resH = append(resH, history)
 			bstr, req.Body = sepIO(req.Body)
+			fmt.Println(req.URL.String())
 			if h.channels.IsForward {
 				reqchan.HMgToHsSignal <- req
-				reqH.SetIdentifier(GetSha1(req.URL.String()))
-				go reqH.MemoryRequest(req, false, bstr)
+				history.SetIdentifier(GetSha1(req.URL.String()))
+				go history.MemoryRequest(req, false, bstr)
 				creq := <-reqchan.HMgToHsSignal
 				bstr, creq.Body = sepIO(req.Body)
-				resH = reqH
 				reqchan.ProxToHMgSignal <- creq
 				if reflect.DeepEqual(req, creq) != true {
-					go reqH.MemoryRequest(creq, true, bstr)
+					go history.MemoryRequest(creq, true, bstr)
 				}
 			} else {
-				reqH.SetIdentifier(GetSha1(req.URL.String()))
-				go reqH.MemoryRequest(req, false, bstr)
-				resH = reqH
+				history.SetIdentifier(GetSha1(req.URL.String()))
+				go history.MemoryRequest(req, false, bstr)
 				reqchan.ProxToHMgSignal <- req
 			}
 		case res := <-reschan.ProxToHMgSignal:
+			history := resH[0]
+			if len(resH[1:]) > 0 {
+				resH = resH[1:]
+			}
+			fmt.Println(res.Status)
 			bstr, res.Body = sepIO(res.Body)
 			reschan.ProxToHMgSignal <- res
-			resH.MemoryResponse(res, bstr)
+			history.MemoryResponse(res, bstr)
 		}
 	}
 }
