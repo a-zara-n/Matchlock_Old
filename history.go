@@ -3,10 +3,12 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 	"sort"
 	"strings"
 
 	"./datastore"
+	"./extractor"
 	"github.com/jinzhu/gorm"
 )
 
@@ -86,12 +88,8 @@ func (r *Request) SetRequest(req *http.Request, bstr string) {
 		fordata(datas)
 	}
 	db.Table = Request{}
-	r.Host = req.Host
-	r.Method = req.Method
-	r.Proto = req.Proto
-	r.URL = req.URL.String()
-	r.ContentLength = req.ContentLength
-	r.TransferEncoding = strings.Join(req.TransferEncoding, ",")
+	r.Host, r.Method, r.Proto, r.URL, r.ContentLength, r.TransferEncoding =
+		req.Host, req.Method, req.Proto, req.URL.String(), req.ContentLength, strings.Join(req.TransferEncoding, ",")
 	db.Insert(r)
 }
 
@@ -105,16 +103,40 @@ func (r *Request) GetHost() []Request {
 	return request
 }
 
-func (r *Request) GetRequest(host string) []Request {
+func (r *Request) GetRequest(host string) []http.Request {
 	host = "%" + host + "%"
 	db.Table = Request{}
 	reqdb := db.OpenDatabase()
 	var request []Request
 	reqdb.
-		Select("DISTINCT method, url").
+		Select("Distinct method,url,proto").
 		Where("host LIKE ?", host).
 		Find(&request)
-	return request
+	retReq := []http.Request{}
+	for _, r := range request {
+		u, _ := url.Parse(r.URL)
+		tr := http.Request{
+			Method: r.Method,
+			Host:   r.Host,
+			URL:    u,
+			Proto:  r.Proto,
+			Header: http.Header{},
+		} //tmprequest
+		rh, rd, strs := RequestHeader{}, RequestData{}, []string{}
+		for _, h := range rh.GetHeader(tr.URL.Host, tr.URL.Path, r.Method) {
+			if h.Name == "Cookie" {
+				continue
+			}
+			tr.Header.Add(h.Name, h.Value)
+		}
+
+		for _, d := range rd.GetData(tr.URL.Host, tr.URL.Path, r.Method) {
+			strs = append(strs, d.Name+"="+d.Value)
+		}
+		tr.Body = extractor.GetIOReadCloser(strings.Join(strs, "&"))
+		retReq = append(retReq, tr)
+	}
+	return retReq
 }
 
 type RequestHeader struct {
@@ -134,14 +156,14 @@ func (r *RequestHeader) SetHeader(name string, value string) {
 	db.Table = RequestHeader{}
 	db.Insert(r)
 }
-func (r *RequestHeader) GetHeader(host string) []RequestHeader {
-	host = "%" + host + "%"
+func (r *RequestHeader) GetHeader(host string, path string, method string) []RequestHeader {
 	db.Table = RequestHeader{}
 	reqdb := db.OpenDatabase()
 	var requestHeader []RequestHeader
 	reqdb.
-		Select("DISTINCT method, url").
-		Where("host LIKE ?", host).
+		Select("*").
+		Where("host = ? AND path = ? AND method = ?", host, path, method).
+		Group("name").
 		Find(&requestHeader)
 	return requestHeader
 }
@@ -164,8 +186,16 @@ func (r *RequestData) SetData(name string, value string) {
 	db.Insert(r)
 }
 
-func (r *RequestData) GetData() {
-
+func (r *RequestData) GetData(host string, path string, method string) []RequestData {
+	db.Table = RequestData{}
+	reqdb := db.OpenDatabase()
+	var requestData []RequestData
+	reqdb.
+		Select("*").
+		Where("host = ? AND path = ? AND method = ?", host, path, method).
+		Group("name").
+		Find(&requestData)
+	return requestData
 }
 
 type Response struct {
