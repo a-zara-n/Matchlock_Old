@@ -9,11 +9,36 @@ import (
 type Response struct {
 	gorm.Model
 	Identifier string
+	Status     string // e.g. "200 OK"
+	StatusCode int    // e.g. 200
+	Proto      string // e.g. "HTTP/1.0"
+	ProtoMajor int    // e.g. 1
+	ProtoMinor int    // e.g. 0
 }
 
 func (r *Response) SetResponse(res *http.Response) {
 
 }
-func (r *Response) GetResponse() {
+
+type ResponseHeader struct {
+	gorm.Model
+	Identifier string
+	Name       string
+	Value      string
+}
+
+func (r *Response) SetResponseHeader(header http.Header) {
+
+}
+
+type ResponseBody struct {
+	gorm.Model
+	Identifier string
+	Body       string
+	Encodetype string
+	Length     int64
+}
+
+func (r *Response) SetResponseBody(body string, length int64, tenc []string) {
 
 }
