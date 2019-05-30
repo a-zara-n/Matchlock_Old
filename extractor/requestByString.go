@@ -16,7 +16,7 @@ func GetRequestByString(msg []byte, req *http.Request) *http.Request {
 	pathAndQuery := strings.Split(startLine[1], "?")
 	req.URL.Path, req.Method, req.Proto =
 		pathAndQuery[0], startLine[0], startLine[2]
-	if len(pathAndQuery[1]) >= 0 {
+	if len(pathAndQuery) > 1 {
 		req.URL.ForceQuery = true
 		req.URL.RawQuery = pathAndQuery[1]
 	} else {
