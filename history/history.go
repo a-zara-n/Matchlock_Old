@@ -1,7 +1,6 @@
 package history
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/jinzhu/gorm"
@@ -10,6 +9,7 @@ import (
 type History struct {
 	gorm.Model
 	Identifier string
+	IsEdit     bool
 }
 
 func (h *History) SetIdentifier(id string) {
@@ -17,9 +17,11 @@ func (h *History) SetIdentifier(id string) {
 }
 
 func (h *History) MemoryRequest(r *http.Request, isEdit bool, bstr string) {
-	fmt.Println(bstr)
+	if bstr == "" {
+		bstr = r.URL.RawQuery
+	}
 	var req = Request{Identifier: h.Identifier, IsEdit: isEdit}
-	go req.SetRequest(r, bstr)
+	go req.SetRequest(r)
 	go req.SetHeader(r.Header)
 	go req.SetData(bstr, r.ContentLength, r.TransferEncoding)
 	db.Table = History{}
