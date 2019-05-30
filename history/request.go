@@ -1,40 +1,14 @@
-package main
+package history
 
 import (
-	"fmt"
 	"net/http"
 	"net/url"
 	"sort"
 	"strings"
 
-	"./datastore"
-	"./extractor"
+	"../extractor"
 	"github.com/jinzhu/gorm"
 )
-
-var db = datastore.Database{Database: "./test.db"}
-
-type History struct {
-	gorm.Model
-	Identifier string
-}
-
-func (h *History) SetIdentifier(id string) {
-	h.Identifier = id
-}
-
-func (h *History) MemoryRequest(r *http.Request, isEdit bool, bstr string) {
-	fmt.Println(bstr)
-	var req = Request{Identifier: h.Identifier, IsEdit: isEdit}
-	req.SetRequest(r, bstr)
-	db.Table = History{}
-	db.Insert(h)
-}
-
-func (h *History) MemoryResponse(r *http.Response, bstr string) {
-	var res = Response{Identifier: h.Identifier}
-	res.SetResponse(r)
-}
 
 type Request struct {
 	gorm.Model
@@ -156,6 +130,7 @@ func (r *RequestHeader) SetHeader(name string, value string) {
 	db.Table = RequestHeader{}
 	db.Insert(r)
 }
+
 func (r *RequestHeader) GetHeader(host string, path string, method string) []RequestHeader {
 	db.Table = RequestHeader{}
 	reqdb := db.OpenDatabase()
@@ -196,16 +171,4 @@ func (r *RequestData) GetData(host string, path string, method string) []Request
 		Group("name").
 		Find(&requestData)
 	return requestData
-}
-
-type Response struct {
-	gorm.Model
-	Identifier string
-}
-
-func (r *Response) SetResponse(res *http.Response) {
-
-}
-func (r *Response) GetResponse() {
-
 }

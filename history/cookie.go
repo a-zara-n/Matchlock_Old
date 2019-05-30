@@ -1,9 +1,9 @@
-package main
+package history
 
 import "github.com/jinzhu/gorm"
 
 //Cookie represents the schema when saving to DB.
-type cookie struct {
+type Cookie struct {
 	gorm.Model
 	Domain   string
 	Path     string
@@ -15,17 +15,17 @@ type cookie struct {
 	SameSite string
 }
 
-func (c cookie) SetCookie(name string, value string) {
+func (c Cookie) SetCookie(name string, value string) {
 	c.Name = name
 	c.Value = value
 	db.Table = RequestData{}
 	db.Insert(c)
 }
 
-func (c cookie) GetCookie(domain string, path string) []cookie {
-	db.Table = cookie{}
+func (c Cookie) GetCookie(domain string, path string) []Cookie {
+	db.Table = Cookie{}
 	cdb := db.OpenDatabase()
-	var cookies []cookie
+	var cookies []Cookie
 	cdb.Select("*").
 		Where("domain = ? AND path LIKE ? ", domain, path+"%").
 		Find(&cookies)
