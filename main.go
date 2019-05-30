@@ -25,6 +25,7 @@ var title = `
 /_/  /_/\_,_/\__/\__/_//_/_/\___/\__/_/\_\ ====   
 =============================================
 `
+var db = datastore.Database{Database: "./test.db"}
 
 func main() {
 	// 基本情報の設定
@@ -50,7 +51,6 @@ func main() {
 
 	app.Action = func(c *cli.Context) {
 		fmt.Println(title)
-		db := datastore.Database{Database: "./test.db"}
 		dbschema := []interface{}{
 			history.History{},
 			history.Request{},
