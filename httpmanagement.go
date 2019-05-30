@@ -40,6 +40,8 @@ func (h *HTTPmanager) Run() {
 			if h.channels.IsForward {
 				reqchan.HMgToHsSignal <- req
 				req = <-reqchan.HMgToHsSignal
+				bstr, req.Body = sepIO(req.Body)
+				req.ContentLength = int64(len(bstr))
 			}
 			reqchan.ProxToHMgSignal <- req
 		case res := <-reschan.ProxToHMgSignal:
