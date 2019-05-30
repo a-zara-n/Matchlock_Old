@@ -45,14 +45,12 @@ func (h *HTTPmanager) Run() {
 				reqchan.ProxToHMgSignal <- req
 			}
 		case res := <-reschan.ProxToHMgSignal:
-			history := resH[0]
+			bstr, res.Body = sepIO(res.Body)
+			reschan.ProxToHMgSignal <- res
+			go resH[0].MemoryResponse(res, bstr)
 			if len(resH[1:]) > 0 {
 				resH = resH[1:]
 			}
-			fmt.Println(res.Status)
-			bstr, res.Body = sepIO(res.Body)
-			reschan.ProxToHMgSignal <- res
-			history.MemoryResponse(res, bstr)
 		}
 	}
 }
