@@ -8,6 +8,7 @@ import (
 	"sort"
 
 	hs "./HTTPServer"
+	"./history"
 
 	"./channel"
 	"./datastore"
@@ -51,11 +52,12 @@ func main() {
 		fmt.Println(title)
 		db := datastore.Database{Database: "./test.db"}
 		dbschema := []interface{}{
-			History{},
-			Request{},
-			RequestHeader{},
-			RequestData{},
-			Response{},
+			history.History{},
+			history.Request{},
+			history.RequestHeader{},
+			history.RequestData{},
+			history.Response{},
+			history.Cookie{},
 		}
 		go func() {
 			for _, v := range dbschema {
