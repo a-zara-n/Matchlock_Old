@@ -57,6 +57,8 @@ func main() {
 			history.RequestHeader{},
 			history.RequestData{},
 			history.Response{},
+			history.RequestData{},
+			history.RequestHeader{},
 			history.Cookie{},
 		}
 		go func() {
