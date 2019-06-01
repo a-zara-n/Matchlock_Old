@@ -17,6 +17,16 @@ type Response struct {
 }
 
 func (r *Response) SetResponse(res *http.Response) {
+	resp := Response{
+		Identifier: r.Identifier,
+		Status:     res.Status,
+		StatusCode: res.StatusCode,
+		Proto:      res.Proto,
+		ProtoMajor: res.ProtoMajor,
+		ProtoMinor: res.ProtoMinor,
+	}
+	db.Table = Request{}
+	db.Insert(resp)
 
 }
 
