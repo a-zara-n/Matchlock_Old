@@ -9,15 +9,22 @@ type client struct {
 	//client is websocket
 	socket *websocket.Conn
 	//send is message channel
-	send chan []byte
+	send chan Message
 	//chan is client chat room
 	connect *connect
 }
 
+//client message json struct
+type Message struct {
+	Type string `json:"Type"`
+	Data string `json:"Data"`
+}
+
 //method read
 func (c *client) read() {
+	var msg Message
 	for {
-		if _, msg, err := c.socket.ReadMessage(); err == nil {
+		if err := c.socket.ReadJSON(&msg); err == nil {
 			c.connect.forward <- msg
 		} else {
 			break
@@ -29,7 +36,7 @@ func (c *client) read() {
 //method write
 func (c *client) write() {
 	for msg := range c.send {
-		if err := c.socket.WriteMessage(websocket.TextMessage, msg); err != nil {
+		if err := c.socket.WriteJSON(msg); err != nil {
 			break
 		}
 	}

@@ -5,11 +5,10 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
-	"unsafe"
 )
 
-func GetRequestByString(msg []byte, req *http.Request) *http.Request {
-	editReq := strings.Split(*(*string)(unsafe.Pointer(&msg)), "\n")
+func GetRequestByString(msg string, req *http.Request) *http.Request {
+	editReq := strings.Split(msg, "\n")
 	req.Header = setHTTPHeader(editReq[1:])
 
 	startLine := strings.Split(editReq[0], " ")
