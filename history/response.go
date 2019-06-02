@@ -18,7 +18,8 @@ type Response struct {
 }
 
 func (r *Response) SetResponse(res *http.Response) {
-	resp := Response{
+
+	resp := &Response{
 		Identifier: r.Identifier,
 		Status:     res.Status,
 		StatusCode: res.StatusCode,
@@ -38,9 +39,10 @@ type ResponseHeader struct {
 }
 
 func (r *Response) SetResponseHeader(header http.Header) {
-	db.Table = ResponseHeader{}
+
+	db.Table = &ResponseHeader{}
 	for name, data := range header {
-		respH := ResponseHeader{
+		respH := &ResponseHeader{
 			Identifier: r.Identifier,
 			Name:       name,
 			Value:      strings.Join(data, ","),
@@ -58,7 +60,7 @@ type ResponseBody struct {
 }
 
 func (r *Response) SetResponseBody(body string, length int64, tenc []string) {
-	respB := ResponseBody{
+	respB := &ResponseBody{
 		Identifier: r.Identifier,
 		Body:       body,
 		Encodetype: strings.Join(tenc, ","),
