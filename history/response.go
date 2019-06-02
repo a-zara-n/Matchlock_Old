@@ -2,6 +2,7 @@ package history
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/jinzhu/gorm"
 )
@@ -27,7 +28,6 @@ func (r *Response) SetResponse(res *http.Response) {
 	}
 	db.Table = Request{}
 	db.Insert(resp)
-
 }
 
 type ResponseHeader struct {
@@ -38,7 +38,15 @@ type ResponseHeader struct {
 }
 
 func (r *Response) SetResponseHeader(header http.Header) {
-
+	db.Table = ResponseHeader{}
+	for name, data := range header {
+		respH := ResponseHeader{
+			Identifier: r.Identifier,
+			Name:       name,
+			Value:      strings.Join(data, ","),
+		}
+		db.Insert(respH)
+	}
 }
 
 type ResponseBody struct {
@@ -50,5 +58,12 @@ type ResponseBody struct {
 }
 
 func (r *Response) SetResponseBody(body string, length int64, tenc []string) {
-
+	respB := ResponseBody{
+		Identifier: r.Identifier,
+		Body:       body,
+		Encodetype: strings.Join(tenc, ","),
+		Length:     length,
+	}
+	db.Table = ResponseBody{}
+	db.Insert(respB)
 }
