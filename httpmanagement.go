@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -37,21 +36,25 @@ func (h *HTTPmanager) Run() {
 				requestHistory.IsEdit = true
 			}
 			b, req.Body = sepIO(req.Body)
-			bstrreq = append(bstrreq, b)
-			reqHeader = append(reqHeader, req.Header)
+
+			bstrreq, reqHeader =
+				append(bstrreq, b), append(reqHeader, req.Header)
+
 			requestHistory.SetIdentifier(history.GetSha1(req.URL.String()))
 			go requestHistory.MemoryRequest(req, false, b)
 			resH = append(resH, requestHistory)
-			fmt.Println(req.URL.String())
+
 			if h.channels.IsForward {
 				reqchan.HMgToHsSignal <- req
 				req = <-reqchan.HMgToHsSignal
 				b, req.Body = sepIO(req.Body)
-				bstrreq = append(bstrreq, b)
-				reqHeader = append(reqHeader, req.Header)
+				bstrreq, reqHeader =
+					append(bstrreq, b), append(reqHeader, req.Header)
 				req.ContentLength = int64(len(b))
 			}
+
 			reqchan.ProxToHMgSignal <- req
+
 			if h.channels.IsForward {
 				var isEdit bool
 				if bstrreq[0] != bstrreq[1] {
