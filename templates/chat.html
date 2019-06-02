@@ -9,70 +9,113 @@
      ul {
        list-style: none;
      }
+     .ui.table thead tr:first-child > th {
+        position: sticky !important;
+        top: 0;
+        z-index: 2;
+    }
+    .slider {
+      height: 10px;
+      text-align: center;
+      letter-spacing: 2px;
+      background-color: #dee2e6;
+      cursor: row-resize;
+      user-select: none; /* disable selection */
+    }
     </style>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.9/semantic.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.3.1/semantic.min.css"> 
+    <script src="https://code.jquery.com/jquery-3.3.1.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.9/semantic.min.js"></script>
   </head>
   <body>
-    <form id="chatbox" class="ui form">
-      <div class="field">
-        <textarea rows="20" cols="100"></textarea>
-      </div>
-    </form>
-    <button id="intercept" class="ui primary button">intercept</button>
-    <button id="forward"  class="ui button">forward </button>
-
+    <div class="insept formbox">
+      <form id="chatbox" class="ui form">
+        <div class="field">
+          <textarea rows="20" cols="100"></textarea>
+        </div>
+      </form>
+      <button id="intercept" class="ui primary button">intercept</button>
+      <button id="forward"  class="ui button">forward </button>
+    </div>
+    <div style="margin-top: 10px;margin-right: 10px;margin-left: 10px;">
+      <div class="histry" style="height:200px;overflow:auto">
+          <table id="histryTable" class="ui small celled striped table" sytle="width:100%">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Method</th>
+                <th>Host</th>
+                <th>Path</th>
+                <th>URL</th>
+                <th>Param</th>
+              </tr>
+            </thead>
+            <tbody id="histryTableBody" data-bind="foreach:FollowupEntries">
+            
+            </tbody>
+          </table>
+        </div>
+        <div class="slider">=</div>
+    </div>
+    
     <script
       src="https://code.jquery.com/jquery-1.12.4.js"
       integrity="sha256-Qw82+bXyGq6MydymqBxNPYTaUXXq7c8v3CwiYwLLNXU="
       crossorigin="anonymous"></script>
-    <script>
-      $(function () {
-        var socket = null;
-        var msgBox = $("#chatbox textarea");
-        var message = $("#message");
-        $("#forward").click(function(){
-          
-          $.ajax({
-                    url:'/api/is/forward',
-                    type:'GET'
-                })
-                // Ajaxリクエストが成功した時発動
-                .done( (data) => {
-
-                })
-                // Ajaxリクエストが失敗した時発動
-                .fail( (data) => {
-
-                })
-                // Ajaxリクエストが成功・失敗どちらでも発動
-                .always( (data) => {
-
-                });        });
-        $("#intercept").click(function(){
-          if (!msgBox.val()) return false;
-          if (!socket) {
-            alert("エラー: WebSocket接続が行われていません。");
-            return false;
-          }
-          socket.send(msgBox.val());
-          msgBox.val("");
+  </body>
+  <script>
+    //histry slidebar
+    let block   = document.querySelector(".histry");
+    let slider  = document.querySelector(".slider");
+    slider.onmousedown = function dragMouseDown(e) {
+      let dragX = e.clientY;
+      document.onmousemove = function onMouseMove(e) {
+        block.style.height = block.offsetHeight + e.clientY - dragX + "px";
+        dragX = e.clientY;
+      }
+      document.onmouseup = () => document.onmousemove = document.onmouseup = null;
+    }
+    $(function () {
+      var socket  = null;
+      var msgBox  = $("#chatbox textarea");
+      var message = $("#message");
+      var histryTableBody = $("#histryTableBody");
+      $("#forward").click(function(){
+        $.ajax({
+                  url:'/api/is/forward',
+                  type:'GET'
+              });
+      });
+      $("#intercept").click(function(){
+        if (!msgBox.val()) return false;
+        if (!socket) {
+          alert("エラー: WebSocket接続が行われていません。");
           return false;
-        });
-        if (!window["WebSocket"]) {
-          alert("エラー: WebSocketに対応していないブラウザです。")
-        } else {
-          socket = new WebSocket("ws://{{.Host}}/connect");
-          socket.onclose = function () {
-            alert("接続が終了しました。");
-          }
-          socket.onmessage = function (e) {
-            msgBox.val("");
-            msgBox.val(e.data);
+        }
+        msg = {Type: "Request", Data: msgBox.val()};
+        jstr = JSON.stringify(msg);
+        socket.send(jstr);
+        msgBox.val("");
+        return false;
+      });
+
+      if (!window["WebSocket"]) {
+        alert("エラー: WebSocketに対応していないブラウザです。")
+      } else {
+        socket = new WebSocket("ws://{{.Host}}/connect");
+        socket.onclose = function () {
+          alert("接続が終了しました。");
+        }
+        socket.onmessage = function (e) {
+          msgBox.val("");
+          data = JSON.parse(e.data)
+          if (data.Type == "Response"){
+            msgBox.val(data.Data);
+          } else if(data.Type == "Histry add") {
+            histryTableBody.append(body);
           }
         }
-      })
-    </script>
-  </body>
+      }
+    });
+  </script>
 </html>
