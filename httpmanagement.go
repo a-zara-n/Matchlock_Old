@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 	"io"
+	"net/http"
 	"strings"
-	"sync"
 
 	"./channel"
 	"./extractor"
@@ -17,78 +17,64 @@ type HTTPmanager struct {
 
 func (h *HTTPmanager) Run() {
 	var (
-		bstr    string
-		resH    = []history.History{}
-		reqchan = h.channels.Request
-		reschan = h.channels.Response
-		sepIO   = SeparationOfIOReadCloser
+		bstrreq   []string
+		bstr      string
+		b         string
+		resH      = []history.History{}
+		reqHeader = []http.Header{}
+		reqchan   = h.channels.Request
+		reschan   = h.channels.Response
+		sepIO     = SeparationOfIOReadCloser
 	)
 	for {
 		select {
 		case req := <-reqchan.ProxToHMgSignal:
+			bstrreq = []string{}
 			requestHistory := history.History{
 				IsEdit: false,
 			}
 			if h.channels.IsForward {
 				requestHistory.IsEdit = true
 			}
-			bstr, req.Body = sepIO(req.Body)
+			b, req.Body = sepIO(req.Body)
+			bstrreq = append(bstrreq, b)
+			reqHeader = append(reqHeader, req.Header)
 			requestHistory.SetIdentifier(history.GetSha1(req.URL.String()))
-			go requestHistory.MemoryRequest(req, false, bstr)
+			go requestHistory.MemoryRequest(req, false, b)
 			resH = append(resH, requestHistory)
 			fmt.Println(req.URL.String())
 			if h.channels.IsForward {
 				reqchan.HMgToHsSignal <- req
 				req = <-reqchan.HMgToHsSignal
-				bstr, req.Body = sepIO(req.Body)
-				req.ContentLength = int64(len(bstr))
+				b, req.Body = sepIO(req.Body)
+				bstrreq = append(bstrreq, b)
+				reqHeader = append(reqHeader, req.Header)
+				req.ContentLength = int64(len(b))
 			}
 			reqchan.ProxToHMgSignal <- req
+			if h.channels.IsForward {
+				var isEdit bool
+				if bstrreq[0] != bstrreq[1] {
+					isEdit = true
+				}
+				for name, data := range reqHeader[1] {
+					if reqHeader[0][name] == nil {
+						isEdit = true
+						break
+					}
+					if strings.Join(reqHeader[0][name], ",") != strings.Join(data, ",") {
+						isEdit = true
+						break
+					}
+				}
+				if isEdit {
+					go requestHistory.MemoryRequest(req, true, bstrreq[1])
+				}
+			}
 		case res := <-reschan.ProxToHMgSignal:
-
 			bstr, res.Body = sepIO(res.Body)
 			reschan.ProxToHMgSignal <- res
 			go resH[0].MemoryResponse(res, bstr)
-			if resH[0].IsEdit {
-				wg := &sync.WaitGroup{}
-				go func() {
-					isEdited := false
-					wg.Add(2)
-					go func() {
-						defer wg.Done()
-						headers := []history.RequestHeader{}
-						db.Table = history.RequestHeader{}
-						openDB := db.OpenDatabase()
-						openDB.Where("Identifier = ?", resH[0].Identifier).Find(&headers)
-						for _, header := range headers {
-							if strings.Join(res.Request.Header[header.Name], ",") != header.Value {
-								isEdited = true
-								break
-							}
-						}
-					}()
-					go func() {
-						defer wg.Done()
-						var convstr []string
-						datas := []history.RequestData{}
-						db.Table = history.RequestData{}
-						openDB := db.OpenDatabase()
-						openDB.Where("Identifier = ?", resH[0].Identifier).Find(&datas)
-						bstr, res.Request.Body = SeparationOfIOReadCloser(res.Request.Body)
-						for _, data := range datas {
-							convstr = append(convstr, data.Name+"="+data.Value)
-						}
-						if bstr != strings.Join(convstr, "&") {
-							isEdited = true
-						}
-					}()
-					wg.Wait()
-					fmt.Println(isEdited)
-				}()
-			}
-			if len(resH[1:]) > 0 {
-				resH = resH[1:]
-			}
 		}
 	}
 }
