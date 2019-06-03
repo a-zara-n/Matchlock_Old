@@ -38,13 +38,8 @@ func (h *httpServer) Run() {
 	c := newConnect(h.channels)
 	http.Handle("/", &templateHandler{filename: "chat.html"})
 	http.Handle("/connect", c)
-	http.HandleFunc("/api/is/forward", func(w http.ResponseWriter, r *http.Request) {
-		if h.channels.IsForward {
-			h.channels.IsForward = false
-		} else {
-			h.channels.IsForward = true
-		}
-	})
+	http.HandleFunc("/api/is/forward", h.changeForward)
+	http.HandleFunc("/api/history/all", GetHistry)
 	go c.Run()
 	if err := http.ListenAndServe(":8888", nil); err != nil {
 		log.Fatal("ListenAndServe:", err)
@@ -53,4 +48,12 @@ func (h *httpServer) Run() {
 
 func NewHTTPServer(m *channel.Matchlock) HttpServer {
 	return &httpServer{channels: m}
+}
+
+func (h *httpServer) changeForward(w http.ResponseWriter, r *http.Request) {
+	if h.channels.IsForward {
+		h.channels.IsForward = false
+	} else {
+		h.channels.IsForward = true
+	}
 }
