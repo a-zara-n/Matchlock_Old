@@ -36,7 +36,7 @@ type httpServer struct {
 
 func (h *httpServer) Run() {
 	c := newConnect(h.channels)
-	http.Handle("/", &templateHandler{filename: "chat.html"})
+	http.Handle("/", &templateHandler{filename: "proto.html"})
 	http.Handle("/connect", c)
 	http.HandleFunc("/api/is/forward", h.changeForward)
 	http.HandleFunc("/api/history/all", GetHistry)
