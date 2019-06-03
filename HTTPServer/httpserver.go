@@ -50,6 +50,8 @@ func (h *httpServer) Run() {
 	}
 	conn := newConnect(h.channels)
 	e := echo.New()
+	e.HideBanner = true
+	e.Logger.SetLevel(99)
 	e.Renderer = t
 	e.GET("/", func(c echo.Context) error {
 		data := struct {
@@ -63,7 +65,6 @@ func (h *httpServer) Run() {
 	})
 	e.GET("/connect", func(c echo.Context) error {
 		conn.ServeHTTP(c.Response(), c.Request())
-		conn.Run()
 		return nil
 	})
 	e.GET("/api/is/forward", func(c echo.Context) error {
@@ -74,6 +75,8 @@ func (h *httpServer) Run() {
 		GetHistry(c.Response(), c.Request())
 		return nil
 	})
+	go conn.Run()
+
 	e.Start(":8888")
 	/*
 		http.Handle("/", &templateHandler{filename: "proto.html"})
