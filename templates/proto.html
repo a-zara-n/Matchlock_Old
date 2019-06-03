@@ -26,18 +26,25 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.3.1/semantic.min.css"> 
     <script src="https://code.jquery.com/jquery-3.3.1.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.9/semantic.min.js"></script>
+    <script>
+    function getHTTPData(hash) {
+      console.log(hash)
+    }
+    </script>
   </head>
   <body>
-    <div class="insept formbox">
+    <div class="insept formbox" style="margin-top: 10px;margin-right: 10px;margin-left: 10px;">
+      <h1>Intercepter</h1>
       <form id="chatbox" class="ui form">
         <div class="field">
-          <textarea rows="20" cols="100"></textarea>
+          <textarea rows="10" cols="100"></textarea>
         </div>
       </form>
       <button id="intercept" class="ui primary button">intercept</button>
       <button id="forward"  class="ui button">forward </button>
     </div>
     <div style="margin-top: 10px;margin-right: 10px;margin-left: 10px;">
+      <h1>history</h1>
       <div class="histry" style="height:200px;overflow:auto">
           <table id="histryTable" class="ui small celled striped table" sytle="width:100%">
             <thead>
@@ -75,11 +82,30 @@
       }
       document.onmouseup = () => document.onmousemove = document.onmouseup = null;
     }
+    var histryTableBody = $("#histryTableBody");
+    $.ajax({
+        url:'/api/history/all',
+        type:'GET'
+    })
+    .done(function(data) {
+      data.Data.forEach(element => {
+        body = 
+          "<tr onclick='getHTTPData(\""+element.Identifier+"\")'>"+
+            "<td>"+element.ID+"</td>"+
+            "<td>"+element.Method+"</td>"+
+            "<td>"+element.Host+"</td>"+
+            "<td>"+element.Path+"</td>"+
+            "<td>"+element.URL+"</td>"+
+            "<td>"+element.Param+"</td>"+
+          "</tr>"
+        histryTableBody.append(body);
+      });
+    });
+
     $(function () {
       var socket  = null;
       var msgBox  = $("#chatbox textarea");
       var message = $("#message");
-      var histryTableBody = $("#histryTableBody");
       $("#forward").click(function(){
         $.ajax({
                   url:'/api/is/forward',
