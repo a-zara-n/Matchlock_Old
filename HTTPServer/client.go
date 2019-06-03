@@ -14,12 +14,6 @@ type client struct {
 	connect *connect
 }
 
-//client message json struct
-type Message struct {
-	Type string `json:"Type"`
-	Data string `json:"Data"`
-}
-
 //method read
 func (c *client) read() {
 	var msg Message
