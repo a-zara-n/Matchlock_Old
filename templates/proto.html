@@ -105,7 +105,7 @@
         socket.onmessage = function (e) {
           msgBox.val("");
           data = JSON.parse(e.data)
-          if (data.Type == "Response"){
+          if (data.Type == "Request"){
             msgBox.val(data.Data);
           } else if(data.Type == "Histry add") {
             histryTableBody.append(body);
