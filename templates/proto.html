@@ -1,37 +1,7 @@
+{{define "index"}}
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>テスト</title>
-    <style>
-     input {
-       display: block;
-     }
-     ul {
-       list-style: none;
-     }
-     .ui.table thead tr:first-child > th {
-        position: sticky !important;
-        top: 0;
-        z-index: 2;
-    }
-    .slider {
-      height: 10px;
-      text-align: center;
-      letter-spacing: 2px;
-      background-color: #dee2e6;
-      cursor: row-resize;
-      user-select: none; /* disable selection */
-    }
-    </style>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.3.1/semantic.min.css"> 
-    <script src="https://code.jquery.com/jquery-3.3.1.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.9/semantic.min.js"></script>
-    <script>
-    function getHTTPData(hash) {
-      console.log(hash)
-    }
-    </script>
-  </head>
+  {{template "_head" .}}
   <body>
     <div class="insept formbox" style="margin-top: 10px;margin-right: 10px;margin-left: 10px;">
       <h1>Intercepter</h1>
@@ -135,7 +105,7 @@
         socket.onmessage = function (e) {
           msgBox.val("");
           data = JSON.parse(e.data)
-          if (data.Type == "Response"){
+          if (data.Type == "Request"){
             msgBox.val(data.Data);
           } else if(data.Type == "Histry add") {
             histryTableBody.append(body);
@@ -145,3 +115,4 @@
     });
   </script>
 </html>
+{{end}}
