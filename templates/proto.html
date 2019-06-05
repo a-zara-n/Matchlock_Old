@@ -71,7 +71,19 @@
         histryTableBody.append(body);
       });
     });
-
+    function getHTTPData(hash) {
+      $.ajax({
+        url:'/api/request/'+hash,
+        type:'GET'
+      }).done(function(data) {
+        Object.keys(data.Data).forEach(function (key) {
+          if (data.Data[key][0]=="{") {
+            a = JSON.parse(data.Data[key])
+            console.log(a)
+          }
+        });
+      });
+    }
     $(function () {
       var socket  = null;
       var msgBox  = $("#chatbox textarea");
