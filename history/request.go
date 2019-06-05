@@ -41,7 +41,7 @@ func (r *Request) SetHeader(header http.Header) {
 		insHeader := &RequestHeader{
 			Identifier: id,
 			Name:       name,
-			Value:      strings.Join(value, ","),
+			Value:      quoteEscape(strings.Join(value, ",")),
 			IsEdit:     ise,
 		}
 		db.Insert(insHeader)
@@ -67,11 +67,17 @@ func (r *Request) SetData(bstr string, length int64, enctype []string) {
 			data := &RequestData{
 				Identifier:       id,
 				Name:             param[0],
-				Value:            strings.Join(param[1:], "="),
+				Value:            quoteEscape(strings.Join(param[1:], "=")),
 				TransferEncoding: strings.Join(enctype, ","),
 				IsEdit:           ise,
 			}
 			db.Insert(data)
 		}
 	}
+}
+
+func quoteEscape(str string) string {
+	strings.Replace(str, `"`, `\"`, -1)
+	strings.Replace(str, "'", `\'`, -1)
+	return str
 }
