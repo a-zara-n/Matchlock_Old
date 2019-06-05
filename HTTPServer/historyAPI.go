@@ -71,7 +71,7 @@ func GetRequest(identifier string, w http.ResponseWriter, r *http.Request) {
 				LEFT JOIN (
 					SELECT
 						identifier,
-						"{header:{"||group_concat('"'||name||'":"'||value||'"',",")||"}}" AS header
+						'{"header":{'||group_concat('"'||name||'": "'||value||'"',",")||"}}" AS header
 					FROM
 						"request_headers"
 					GROUP BY identifier
@@ -90,7 +90,7 @@ func GetRequest(identifier string, w http.ResponseWriter, r *http.Request) {
 				LEFT JOIN (
 					SELECT
 						identifier,
-						"{data:{"||group_concat('"'||name||'":"'||value||'"',",")||"}}" AS param
+						'{"data":{'||group_concat('"'||name||'":"'||value||'"',",")||"}}" AS param
 					FROM
 						"request_data"
 					GROUP BY identifier
@@ -100,7 +100,7 @@ func GetRequest(identifier string, w http.ResponseWriter, r *http.Request) {
 				LEFT JOIN (
 					SELECT
 						identifier,
-						"{header:{"||group_concat('"'||name||'":"'||value||'"',",")||"}}" AS header
+						'{"header":{'||group_concat('"'||name||'":"'||value||'"',",")||"}}" AS header
 					FROM
 						"request_headers"
 					GROUP BY identifier
@@ -118,7 +118,7 @@ func GetRequest(identifier string, w http.ResponseWriter, r *http.Request) {
 				LEFT JOIN (
 					SELECT
 						identifier,
-						"{header:{"||group_concat('"'||name||'":"'||value||'"',",")||"}}" AS header
+						'{"header":{'||group_concat('"'||name||'":"'||value||'"',",")||"}}" AS header
 					FROM
 						"response_headers"
 					GROUP BY identifier
