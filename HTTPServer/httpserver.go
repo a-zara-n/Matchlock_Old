@@ -75,6 +75,11 @@ func (h *httpServer) Run() {
 		GetHistry(c.Response(), c.Request())
 		return nil
 	})
+	e.GET("/api/request/:identifier", func(c echo.Context) error {
+		identifier := c.Param("identifier")
+		GetRequest(identifier, c.Response(), c.Request())
+		return nil
+	})
 	go conn.Run()
 
 	e.Start(":8888")
