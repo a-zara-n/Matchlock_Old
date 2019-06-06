@@ -72,7 +72,7 @@ func (h *httpServer) Run() {
 		return c.JSON(http.StatusOK, "{status: \"OK\"}")
 	})
 	e.GET("/api/history/all", func(c echo.Context) error {
-		GetHistry(c.Response(), c.Request())
+		GetHistryAll(c.Response(), c.Request())
 		return nil
 	})
 	e.GET("/api/request/:identifier", func(c echo.Context) error {

@@ -5,7 +5,9 @@ import (
 	"net/http"
 )
 
-func GetHistry(w http.ResponseWriter, r *http.Request) {
+var historyCount int
+
+func getHistory(i int) []historyData {
 	historys := []historyData{}
 	hisdb := db.OpenDatabase()
 	hisdb.Table("requests").
@@ -21,9 +23,15 @@ func GetHistry(w http.ResponseWriter, r *http.Request) {
 			ORDER BY id ASC
 		) AS reqd ON 
 			requests.identifier = reqd.identifier`).
+		Where("id >= ?", i).
 		Find(&historys)
+	return historys
+}
+func GetHistryAll(w http.ResponseWriter, r *http.Request) {
+	historyCount = 1
+	historys := getHistory(historyCount)
 	res, err := json.Marshal(APIresponse{Data: historys})
-
+	historyCount = len(historys)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
