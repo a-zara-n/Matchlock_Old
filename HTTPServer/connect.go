@@ -1,8 +1,10 @@
 package httpserver
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
+	"time"
 
 	"../channel"
 	"../extractor"
@@ -25,6 +27,33 @@ type connect struct {
 
 func (c *connect) Run() {
 	reqchan := c.channel.Request
+	go func() {
+		time.Sleep(5 * time.Second)
+		hisdb := db.OpenDatabase()
+		for {
+			var count int
+			hisdb.Table("requests").Count(&count)
+			if historyCount <= count {
+				historys := getHistory(historyCount)
+				res, _ := json.Marshal(APIresponse{Data: historys})
+				historyCount += len(historys)
+				mes := Message{
+					Type: "History",
+					Data: string(res),
+				}
+				for client := range c.clients {
+					select {
+					case client.send <- mes:
+					default:
+						delete(c.clients, client)
+						close(client.send)
+					}
+				}
+				time.Sleep(50 * time.Millisecond)
+			}
+			time.Sleep(50 * time.Millisecond)
+		}
+	}()
 	for {
 		select {
 		case client := <-c.join:
