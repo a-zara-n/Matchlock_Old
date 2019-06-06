@@ -19,7 +19,10 @@ func (c *client) read() {
 	var msg Message
 	for {
 		if err := c.socket.ReadJSON(&msg); err == nil {
-			c.connect.forward <- msg
+			switch msg.Type {
+			case "Request":
+				c.connect.forward <- msg
+			}
 		} else {
 			break
 		}
