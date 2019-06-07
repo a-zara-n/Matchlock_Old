@@ -28,13 +28,15 @@ type connect struct {
 func (c *connect) Run() {
 	reqchan := c.channel.Request
 	go func() {
-		time.Sleep(5 * time.Second)
+		var count int
 		hisdb := db.OpenDatabase()
+		hisdb.Table("requests").Count(&count)
+		historyCount = count
+		time.Sleep(5 * time.Second)
 		for {
-			var count int
 			hisdb.Table("requests").Count(&count)
-			if historyCount <= count {
-				historys := getHistory(historyCount)
+			if count != historyCount {
+				historys := getHistory(historyCount + 1)
 				res, _ := json.Marshal(APIresponse{Data: historys})
 				historyCount += len(historys)
 				mes := Message{
