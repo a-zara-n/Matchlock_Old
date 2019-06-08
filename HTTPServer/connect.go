@@ -35,7 +35,7 @@ func (c *connect) Run() {
 		time.Sleep(5 * time.Second)
 		for {
 			hisdb.Table("requests").Count(&count)
-			if count != historyCount {
+			if count != historyCount && historyCount < count {
 				historys := getHistory(historyCount + 1)
 				res, _ := json.Marshal(APIresponse{Data: historys})
 				historyCount += len(historys)
