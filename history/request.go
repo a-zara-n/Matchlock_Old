@@ -77,7 +77,7 @@ func (r *Request) SetData(bstr string, length int64, enctype []string) {
 }
 
 func quoteEscape(str string) string {
-	strings.Replace(str, `"`, `\"`, -1)
-	strings.Replace(str, "'", `\'`, -1)
+	str = strings.Replace(str, `"`, `\\\"`, -1)
+	str = strings.Replace(str, "'", `\\\'`, -1)
 	return str
 }
