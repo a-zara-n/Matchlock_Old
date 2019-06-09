@@ -17,18 +17,6 @@ func (t *Template) Render(w io.Writer, name string, data interface{}, c echo.Con
 	return t.templates.ExecuteTemplate(w, name, data)
 }
 
-/*
-func (t *templateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	t.once.Do(func() {
-		t.templ =
-			template.Must(template.ParseFiles(filepath.Join("templates", t.filename)))
-	})
-	data := map[string]interface{}{
-		"Host": r.Host,
-	}
-	t.templ.Execute(w, data)
-}
-*/
 type ServiceInfo struct {
 	Title string
 }
@@ -83,16 +71,6 @@ func (h *httpServer) Run() {
 	go conn.Run()
 
 	e.Start(":8888")
-	/*
-		http.Handle("/", &templateHandler{filename: "proto.html"})
-		http.Handle("/connect", c)
-		http.HandleFunc("/api/is/forward", h.changeForward)
-		http.HandleFunc("/api/history/all", GetHistry)
-		go c.Run()
-		if err := http.ListenAndServe(":8888", nil); err != nil {
-			log.Fatal("ListenAndServe:", err)
-		}
-	*/
 }
 
 func NewHTTPServer(m *channel.Matchlock) HttpServer {
