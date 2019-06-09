@@ -27,6 +27,18 @@ var title = `
 `
 var db = datastore.Database{Database: "./test.db"}
 
+//init db
+var dbschema = []interface{}{
+	history.History{},
+	history.Request{},
+	history.RequestHeader{},
+	history.RequestData{},
+	history.Response{},
+	history.ResponseHeader{},
+	history.ResponseBody{},
+	history.Cookie{},
+}
+
 func main() {
 	// 基本情報の設定
 	app := cli.NewApp()
@@ -51,16 +63,6 @@ func main() {
 
 	app.Action = func(c *cli.Context) {
 		fmt.Println(title)
-		dbschema := []interface{}{
-			history.History{},
-			history.Request{},
-			history.RequestHeader{},
-			history.RequestData{},
-			history.Response{},
-			history.ResponseHeader{},
-			history.ResponseBody{},
-			history.Cookie{},
-		}
 		go func() {
 			for _, v := range dbschema {
 				db.Table = v
