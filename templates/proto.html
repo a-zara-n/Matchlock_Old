@@ -71,17 +71,17 @@
         histryTableBody.append(body);
       });
     });
+    var HistoryData = []
+    var InterceptData
     function getHTTPData(hash) {
       $.ajax({
         url:'/api/request/'+hash,
         type:'GET'
       }).done(function(data) {
-        Object.keys(data.Data).forEach(function (key) {
-          if (data.Data[key][0]=="{") {
-            a = JSON.parse(data.Data[key])
-            console.log(a)
-          }
-        });
+        data.Data["Header"]     = JSON.parse(data.Data["Header"]);
+        data.Data["Param"]      = JSON.parse(data.Data["Param"]);
+        data.Data["EditHeader"] = JSON.parse(data.Data["EditHeader"]);
+        data.Data["EditParam"]  = JSON.parse(data.Data["EditParam"]);
       });
     }
     $(function () {
@@ -115,10 +115,11 @@
           alert("接続が終了しました。");
         }
         socket.onmessage = function (e) {
-          msgBox.val("");
           data = JSON.parse(e.data)
           if (data.Type == "Request"){
-            msgBox.val(data.Data);
+            msgBox.val("");
+            InterceptData = data.Data
+            msgBox.val(InterceptData);
           } else if(data.Type == "History") {
             d = JSON.parse(data.Data)
             d.Data.forEach(element => {
