@@ -25,6 +25,7 @@ func (h *HTTPmanager) Run() {
 		sepIO        = SeparationOfIOReadCloser
 		requests     = h.Information.Request
 		editRequests = h.Information.EditRequest
+		bodyOfStr    string
 	)
 	for {
 		select {
@@ -32,15 +33,12 @@ func (h *HTTPmanager) Run() {
 			httphistory := history.History{
 				IsEdit: h.channels.IsForward,
 			}
-			identifier := history.GetSha1(req.URL.String())
-			httphistory.SetIdentifier(identifier)
-			bodyOfStr := requests.SetRequest(req)
-			go httphistory.MemoryRequest(req, false, bodyOfStr)
+			httphistory.SetIdentifier(history.GetSha1(req.URL.String()))
+			go httphistory.MemoryRequest(req, false, requests.SetRequest(req))
 			if h.channels.IsForward {
 				reqchan.HMgToHsSignal <- req
 				req = <-reqchan.HMgToHsSignal
-				bodyOfStr := editRequests.SetRequest(req)
-				req.ContentLength = int64(len(bodyOfStr))
+				req.ContentLength = int64(len(editRequests.SetRequest(req)))
 			}
 			client := &http.Client{Timeout: time.Duration(10) * time.Second}
 			req.RequestURI = ""
