@@ -30,23 +30,11 @@ func (p *proxyInfo) Run() {
 			isHost = append(isHost, i)
 			if i {
 				reqchan.ProxToHMgSignal <- r
-				r = <-reqchan.ProxToHMgSignal
+				resp := <-reschan.ProxToHMgSignal
+				return nil, resp
 			}
 			return r, nil
 		})
-	p.proxy.OnResponse().DoFunc(
-		func(r *http.Response, ctx *goproxy.ProxyCtx) *http.Response {
-			i := isHost[0]
-			if len(isHost[1:]) > 0 {
-				isHost = isHost[1:]
-			}
-			if i {
-				reschan.ProxToHMgSignal <- r
-				r = <-reschan.ProxToHMgSignal
-			}
-			return r
-		})
-
 	http.ListenAndServe(":10080", p.proxy)
 }
 

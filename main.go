@@ -47,7 +47,7 @@ func main() {
 	m := channel.NewMatchChannel()
 	pr := proxy.NewProxy(m)
 	hs := hs.NewHTTPServer(m)
-	hh := NewHHTTPmanager(m)
+	hh := NewHTTPmanager(m)
 
 	app.Action = func(c *cli.Context) {
 		fmt.Println(title)
