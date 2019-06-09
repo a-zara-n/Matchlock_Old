@@ -3,91 +3,69 @@ package main
 import (
 	"io"
 	"net/http"
-	"strings"
+	"time"
 
 	"./channel"
 	"./extractor"
 	"./history"
 )
 
+//HTTPmanager is controls HTTP acquired by proxy etc.
 type HTTPmanager struct {
-	channels *channel.Matchlock
+	channels    *channel.Matchlock
+	Information exchangeInformationOfHTTP
 }
 
+//Run is control of HTTP.
 func (h *HTTPmanager) Run() {
+	h.Information = newExchangeInformationOfHTTP()
 	var (
-		bstrreq   []string
-		bstr      string
-		b         string
-		resH      = []history.History{}
-		reqHeader = []http.Header{}
-		reqchan   = h.channels.Request
-		reschan   = h.channels.Response
-		sepIO     = SeparationOfIOReadCloser
+		reqchan      = h.channels.Request
+		reschan      = h.channels.Response
+		sepIO        = SeparationOfIOReadCloser
+		requests     = h.Information.Request
+		editRequests = h.Information.EditRequest
 	)
 	for {
 		select {
 		case req := <-reqchan.ProxToHMgSignal:
-			bstrreq = []string{}
-			requestHistory := history.History{
-				IsEdit: false,
+			httphistory := history.History{
+				IsEdit: h.channels.IsForward,
 			}
-			if h.channels.IsForward {
-				requestHistory.IsEdit = true
-			}
-			b, req.Body = sepIO(req.Body)
-
-			bstrreq, reqHeader =
-				append(bstrreq, b), append(reqHeader, req.Header)
-
-			requestHistory.SetIdentifier(history.GetSha1(req.URL.String()))
-			go requestHistory.MemoryRequest(req, false, b)
-			resH = append(resH, requestHistory)
-
+			identifier := history.GetSha1(req.URL.String())
+			httphistory.SetIdentifier(identifier)
+			bodyOfStr := requests.SetRequest(req)
+			go httphistory.MemoryRequest(req, false, bodyOfStr)
 			if h.channels.IsForward {
 				reqchan.HMgToHsSignal <- req
 				req = <-reqchan.HMgToHsSignal
-				b, req.Body = sepIO(req.Body)
-				bstrreq, reqHeader =
-					append(bstrreq, b), append(reqHeader, req.Header)
-				req.ContentLength = int64(len(b))
+				bodyOfStr := editRequests.SetRequest(req)
+				req.ContentLength = int64(len(bodyOfStr))
 			}
-
-			reqchan.ProxToHMgSignal <- req
-
+			client := &http.Client{Timeout: time.Duration(10) * time.Second}
+			req.RequestURI = ""
+			resp, _ := client.Do(req)
+			bodyOfStr, resp.Body = sepIO(resp.Body)
+			go httphistory.MemoryResponse(resp, bodyOfStr)
+			reschan.ProxToHMgSignal <- resp
 			if h.channels.IsForward {
-				var isEdit bool
-				if bstrreq[0] != bstrreq[1] {
-					isEdit = true
-				}
-				for name, data := range reqHeader[1] {
-					if reqHeader[0][name] == nil {
-						isEdit = true
-						break
-					}
-					if strings.Join(reqHeader[0][name], ",") != strings.Join(data, ",") {
-						isEdit = true
-						break
-					}
-				}
+				isEdit, bodys, _ := h.Information.IsEdit()
 				if isEdit {
-					go requestHistory.MemoryRequest(req, true, bstrreq[1])
+					go httphistory.MemoryRequest(req, true, bodys[1])
 				}
 			}
-		case res := <-reschan.ProxToHMgSignal:
-			bstr, res.Body = sepIO(res.Body)
-			reschan.ProxToHMgSignal <- res
-			go resH[0].MemoryResponse(res, bstr)
 		}
 	}
 }
 
+//SeparationOfIOReadCloser io.ReadCloser => string & io.ReadCloser
 func SeparationOfIOReadCloser(b io.ReadCloser) (string, io.ReadCloser) {
-	bstr := extractor.GetStringBody(b)
-	b = extractor.GetIOReadCloser(bstr)
-	return bstr, b
+	bodyOfStr := extractor.GetStringBody(b)
+	b = extractor.GetIOReadCloser(bodyOfStr)
+	return bodyOfStr, b
 }
 
-func NewHHTTPmanager(m *channel.Matchlock) *HTTPmanager {
+//NewHTTPmanager is HTTPmanager structure return.
+func NewHTTPmanager(m *channel.Matchlock) *HTTPmanager {
 	return &HTTPmanager{channels: m}
 }

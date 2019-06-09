@@ -35,11 +35,11 @@ func NewMatchChannel() *Matchlock {
 	return &Matchlock{
 		ExitSignal: make(chan os.Signal),
 		Request: RequestChan{
-			ProxToHMgSignal: make(chan *http.Request),
+			ProxToHMgSignal: make(chan *http.Request, 10000),
 			HMgToHsSignal:   make(chan *http.Request),
 		},
 		Response: ResponseChan{
-			ProxToHMgSignal: make(chan *http.Response),
+			ProxToHMgSignal: make(chan *http.Response, 10000),
 			HMgToHsSignal:   make(chan *http.Response),
 		},
 		IsForward: false,

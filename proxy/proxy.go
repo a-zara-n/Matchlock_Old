@@ -20,12 +20,7 @@ func (p *proxyInfo) Run() {
 	var isHost = []bool{}
 	p.proxy = goproxy.NewProxyHttpServer()
 	p.proxy.Verbose = false
-	//テストで配置
-	//proxy.OnRequest(goproxy.ReqHostMatches(regexp.MustCompile("^.*$"))).
-	//	HandleConnect(goproxy.AlwaysMitm)
-	//を利用したいがうまく削除ができるか不明なので考慮する
 	AddWhiteList(`^[0-9a-zA-Z]*\.?(localhost)(\.+[0-9a-zA-Z]+)*$`)
-	//AddWhiteList(`^[0-9a-zA-Z]*\.?(google)(\.+[0-9a-zA-Z]+)*$`)
 	p.proxy.OnRequest().HandleConnect(goproxy.AlwaysMitm)
 	reqchan := p.channels.Request
 	reschan := p.channels.Response
@@ -34,25 +29,12 @@ func (p *proxyInfo) Run() {
 			i := whitelistMatch(r.Host)
 			isHost = append(isHost, i)
 			if i {
-
 				reqchan.ProxToHMgSignal <- r
-				r = <-reqchan.ProxToHMgSignal
+				resp := <-reschan.ProxToHMgSignal
+				return nil, resp
 			}
 			return r, nil
 		})
-	p.proxy.OnResponse().DoFunc(
-		func(r *http.Response, ctx *goproxy.ProxyCtx) *http.Response {
-			i := isHost[0]
-			if len(isHost[1:]) > 0 {
-				isHost = isHost[1:]
-			}
-			if i {
-				reschan.ProxToHMgSignal <- r
-				r = <-reschan.ProxToHMgSignal
-			}
-			return r
-		})
-
 	http.ListenAndServe(":10080", p.proxy)
 }
 
