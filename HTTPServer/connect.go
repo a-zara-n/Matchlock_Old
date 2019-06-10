@@ -9,6 +9,7 @@ import (
 	"../channel"
 	"../extractor"
 	"github.com/gorilla/websocket"
+	"github.com/labstack/echo"
 )
 
 type connect struct {
@@ -91,11 +92,15 @@ func (c *connect) Run() {
 
 var upgrader = &websocket.Upgrader{}
 
-func (c *connect) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+func (c *connect) ServeHTTP(cont echo.Context) error {
+	var (
+		w   = cont.Response()
+		req = cont.Request()
+	)
 	socket, err := upgrader.Upgrade(w, req, nil)
 	if err != nil {
 		log.Fatal("ServeHTTP:", err)
-		return
+		return err
 	}
 	client := &client{
 		socket:  socket,
@@ -106,6 +111,7 @@ func (c *connect) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	defer func() { c.leave <- client }()
 	go client.write()
 	client.read()
+	return nil
 }
 
 func newConnect(m *channel.Matchlock) *connect {

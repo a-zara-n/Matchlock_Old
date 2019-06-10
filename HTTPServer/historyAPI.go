@@ -3,6 +3,8 @@ package httpserver
 import (
 	"encoding/json"
 	"net/http"
+
+	"github.com/labstack/echo"
 )
 
 var historyCount int
@@ -131,20 +133,26 @@ func getHistory(i int) []historyData {
 		Find(&historys)
 	return historys
 }
-func GetHistryAll(w http.ResponseWriter, r *http.Request) {
+func GetHistryAll(c echo.Context) error {
+	var w = c.Response()
 	historyCount = 1
 	historys := getHistory(historyCount)
 	res, err := json.Marshal(APIresponse{Data: historys})
 	historyCount = len(historys)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(res)
+	return nil
 }
 
-func GetRequest(identifier string, w http.ResponseWriter, r *http.Request) {
+func GetRequest(c echo.Context) error {
+	var (
+		identifier = c.Param("identifier")
+		w          = c.Response()
+	)
 	ret := httpdata{}
 	hisdb := db.OpenDatabase()
 	hisdb.Table("histories").
@@ -158,8 +166,9 @@ func GetRequest(identifier string, w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(res)
+	return nil
 }

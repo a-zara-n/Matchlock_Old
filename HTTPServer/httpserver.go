@@ -33,43 +33,19 @@ type httpServer struct {
 }
 
 func (h *httpServer) Run() {
-	t := &Template{
-		templates: template.Must(template.ParseGlob("./templates/*.html")),
-	}
 	conn := newConnect(h.channels)
 	e := echo.New()
 	e.HideBanner = true
 	e.Logger.SetLevel(99)
-	e.Renderer = t
-	e.GET("/", func(c echo.Context) error {
-		data := struct {
-			ServiceInfo
-			Host string
-		}{
-			ServiceInfo: serviceInfo,
-			Host:        c.Request().Host,
-		}
-		return c.Render(http.StatusOK, "index", data)
-	})
-	e.GET("/connect", func(c echo.Context) error {
-		conn.ServeHTTP(c.Response(), c.Request())
-		return nil
-	})
-	e.GET("/api/is/forward", func(c echo.Context) error {
-		h.changeForward(c)
-		return c.JSON(http.StatusOK, "{status: \"OK\"}")
-	})
-	e.GET("/api/history/all", func(c echo.Context) error {
-		GetHistryAll(c.Response(), c.Request())
-		return nil
-	})
-	e.GET("/api/request/:identifier", func(c echo.Context) error {
-		identifier := c.Param("identifier")
-		GetRequest(identifier, c.Response(), c.Request())
-		return nil
-	})
+	e.Renderer = &Template{
+		templates: template.Must(template.ParseGlob("./templates/*.html")),
+	}
+	e.GET("/", h.index)
+	e.GET("/connect", conn.ServeHTTP)
+	e.GET("/api/is/forward", h.changeForward)
+	e.GET("/api/history/all", GetHistryAll)
+	e.GET("/api/request/:identifier", GetRequest)
 	go conn.Run()
-
 	e.Start(":8888")
 }
 
@@ -77,10 +53,22 @@ func NewHTTPServer(m *channel.Matchlock) HttpServer {
 	return &httpServer{channels: m}
 }
 
-func (h *httpServer) changeForward(c echo.Context) {
+func (h *httpServer) changeForward(c echo.Context) error {
 	if h.channels.IsForward {
 		h.channels.IsForward = false
 	} else {
 		h.channels.IsForward = true
 	}
+	return c.JSON(http.StatusOK, "{status: \"OK\"}")
+}
+
+func (h *httpServer) index(c echo.Context) error {
+	data := struct {
+		ServiceInfo
+		Host string
+	}{
+		ServiceInfo: serviceInfo,
+		Host:        c.Request().Host,
+	}
+	return c.Render(http.StatusOK, "index", data)
 }
