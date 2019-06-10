@@ -52,13 +52,16 @@ func AddWhiteList(domain string) bool {
 	whitelist = append(whitelist, domain)
 	return true
 }
+
 func RemoveWhiteList(i int) bool {
 	whitelist = append(whitelist[:i], whitelist[i+1:]...)
 	return true
 }
+
 func GetALLWhiteList(domain string) []string {
 	return whitelist
 }
+
 func UpdataWhiteList(domains []string) bool {
 	whitelist = domains
 	return true
