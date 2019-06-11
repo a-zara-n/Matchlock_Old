@@ -1,0 +1,4 @@
+string
+script
+Script
+SCRIPT
