@@ -7,12 +7,12 @@ import (
 	"os/signal"
 	"sort"
 
-	hs "./HTTPServer"
-	"./history"
+	hs "github.com/WestEast1st/Matchlock/HTTPServer"
+	"github.com/WestEast1st/Matchlock/history"
 
-	"./channel"
-	"./datastore"
-	"./proxy"
+	"github.com/WestEast1st/Matchlock/channel"
+	"github.com/WestEast1st/Matchlock/datastore"
+	"github.com/WestEast1st/Matchlock/proxy"
 	cli "github.com/urfave/cli"
 )
 

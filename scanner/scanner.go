@@ -8,8 +8,8 @@ import (
 	"strconv"
 	"strings"
 
-	"../datastore"
-	"./attacker"
+	"github.com/WestEast1st/Matchlock/datastore"
+	"github.com/WestEast1st/Matchlock/scanner/attacker"
 )
 
 type scanner struct {

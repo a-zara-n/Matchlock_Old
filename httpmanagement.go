@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"time"
 
-	"./channel"
-	"./extractor"
-	"./history"
+	"github.com/WestEast1st/Matchlock/channel"
+	"github.com/WestEast1st/Matchlock/extractor"
+	"github.com/WestEast1st/Matchlock/history"
 )
 
 //HTTPmanager is controls HTTP acquired by proxy etc.

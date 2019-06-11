@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"regexp"
 
-	"../channel"
+	"github.com/WestEast1st/Matchlock/channel"
 	"github.com/elazarl/goproxy"
 )
 

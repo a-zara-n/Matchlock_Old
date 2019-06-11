@@ -3,7 +3,7 @@ package attacker
 import (
 	"io"
 
-	"../../extractor"
+	"github.com/WestEast1st/Matchlock/extractor"
 )
 
 func GetStringBody(b io.ReadCloser) string {
