@@ -5,7 +5,7 @@ import (
 	"net/url"
 	"strings"
 
-	"../extractor"
+	"github.com/WestEast1st/Matchlock/extractor"
 )
 
 type Request struct {
@@ -20,6 +20,7 @@ func (r *Request) GetRequest(host string) []http.Request {
 	reqdb := db.OpenDatabase()
 	var request []Request
 	reqdb.
+		Table("Requests").
 		Select("Distinct method,url,proto").
 		Where("host LIKE ?", likehost).
 		Find(&request)
@@ -35,9 +36,6 @@ func (r *Request) GetRequest(host string) []http.Request {
 		} //tmprequest
 		rh, rd, strs := RequestHeader{}, RequestData{}, []string{}
 		for _, h := range rh.GetHeader(tr.URL.Host, tr.URL.Path, r.Method) {
-			if h.Name == "Cookie" {
-				continue
-			}
 			tr.Header.Add(h.Name, h.Value)
 		}
 
@@ -57,11 +55,11 @@ type RequestHeader struct {
 }
 
 func (r *RequestHeader) GetHeader(host string, path string, method string) []RequestHeader {
-	db.Table = RequestHeader{}
 	reqdb := db.OpenDatabase()
 	var requestHeader []RequestHeader
 	reqdb.
-		Select("name, value, is_edit").
+		Table("request_headers").
+		Select("name, value, request_headers.is_edit AS is_edit").
 		Joins("LEFT JOIN requests ON requests.identifier = request_headers.identifier").
 		Where("host = ? AND path = ? AND method = ?", host, path, method).
 		Group("name").
@@ -76,12 +74,12 @@ type RequestData struct {
 }
 
 func (r *RequestData) GetData(host string, path string, method string) []RequestData {
-	db.Table = RequestData{}
 	reqdb := db.OpenDatabase()
 	var requestData []RequestData
 	reqdb.
-		Select("name, value, is_edit").
-		Joins("LEFT JOIN requests ON requests.identifier = request_headers.identifier").
+		Table("request_data").
+		Select("name, value, request_data.is_edit AS is_edit").
+		Joins("LEFT JOIN requests ON requests.identifier = request_data.identifier").
 		Where("host = ? AND path = ? AND method = ?", host, path, method).
 		Group("name").
 		Find(&requestData)
