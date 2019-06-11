@@ -32,7 +32,7 @@ type getdata struct {
 
 func (s *scanner) Scan() { //tmpname いずれ変える
 	payloads := [][]string{}
-	for _, name := range []string{"payload", "xss"} {
+	for _, name := range []string{"inspection/int/int", "inspection/int/int_zero", "inspection/int/int_minus", "inspection/int/int_operator", "xss"} {
 		f, err := os.Open("./payload/" + name + ".txt")
 		if err != nil {
 			fmt.Println("error")
@@ -41,9 +41,13 @@ func (s *scanner) Scan() { //tmpname いずれ変える
 		b, err := ioutil.ReadAll(f)
 		payloads = append(payloads, strings.Split(string(b), "\n"))
 	}
+
 	for _, httpReq := range s.ScanTargets {
 		paramdata := []attacker.ParamData{}
 		for _, paramAndValue := range strings.Split(attacker.GetStringBody(httpReq.Body), "&") {
+			if len(paramAndValue) == 0 {
+				continue
+			}
 			var (
 				maxTypeName  string
 				maxTypeCount int
@@ -52,7 +56,8 @@ func (s *scanner) Scan() { //tmpname いずれ変える
 			name, reqdb, getdatas :=
 				ss[0], db.OpenDatabase(), []getdata{}
 			reqdb.
-				Table("request_data").Select("Name,Value, count(Value) AS count").
+				Table("request_data").Select("Name, Value, count(Value) AS count").
+				Joins("LEFT JOIN requests ON requests.identifier = request_data.identifier").
 				Where("host = ? AND path = ? AND method = ? AND name = ?",
 					httpReq.URL.Host, httpReq.URL.Path, httpReq.Method, name).
 				Group("value").Order("count Desc").
@@ -69,6 +74,9 @@ func (s *scanner) Scan() { //tmpname いずれ変える
 				Type:     maxTypeName,
 				DefaultV: getdatas[0].Value,
 			})
+		}
+		if len(paramdata) == 0 {
+			continue
 		}
 		for _, payload := range payloads {
 			attacker.Attack(httpReq, paramdata, payload)
