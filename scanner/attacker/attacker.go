@@ -111,6 +111,8 @@ func (a attacker) Cluster(name []string, defaultV map[string]string, payload []s
 	}
 	var function func(length int, i int, m map[string]string)
 	function = func(length int, i int, m map[string]string) {
+		a.Request.Close = true
+
 		if length > i {
 			for _, p := range payload {
 				m[name[i]] = p
@@ -124,13 +126,13 @@ func (a attacker) Cluster(name []string, defaultV map[string]string, payload []s
 			} else {
 				a.Request.URL.RawQuery = html.UnescapeString(buf.String())
 			}
-			a.Request.Close = true
-
 			resp, err := a.client.Do(a.Request)
 			if err != nil {
 				panic(err)
 			}
 			fmt.Println(resp.Status)
+			resp.Body.Close()
+			//time.Sleep(10 * time.Millisecond)
 		}
 	}
 	function(len(name), 0, m)
