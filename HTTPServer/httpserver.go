@@ -45,6 +45,7 @@ func (h *httpServer) Run() {
 	e.GET("/api/is/forward", h.changeForward)
 	e.GET("/api/history/all", GetHistryAll)
 	e.GET("/api/request/:identifier", GetRequest)
+	e.GET("/api/scan/:domain/:type", Scan)
 	go conn.Run()
 	e.Start(":8888")
 }
