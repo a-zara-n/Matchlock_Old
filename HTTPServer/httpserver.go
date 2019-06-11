@@ -5,7 +5,7 @@ import (
 	"io"
 	"net/http"
 
-	"../channel"
+	"github.com/WestEast1st/Matchlock/channel"
 	"github.com/labstack/echo"
 )
 

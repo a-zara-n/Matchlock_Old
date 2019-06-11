@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"time"
 
-	"../channel"
-	"../extractor"
+	"github.com/WestEast1st/Matchlock/channel"
+	"github.com/WestEast1st/Matchlock/extractor"
 	"github.com/gorilla/websocket"
 	"github.com/labstack/echo"
 )
