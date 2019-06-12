@@ -30,18 +30,8 @@ type getdata struct {
 	Count int
 }
 
-func (s *scanner) Scan() { //tmpname いずれ変える
-	payloads := [][]string{}
-	for _, name := range []string{"inspection/int/int", "inspection/int/int_zero", "inspection/int/int_minus", "inspection/int/int_operator", "xss"} {
-		f, err := os.Open("./payload/" + name + ".txt")
-		if err != nil {
-			fmt.Println("error")
-		}
-		defer f.Close()
-		b, err := ioutil.ReadAll(f)
-		payloads = append(payloads, strings.Split(string(b), "\n"))
-	}
-
+func (s *scanner) Scan(typeString string) { //tmpname いずれ変える
+	payloads := s.getPayload(typeString)
 	for _, httpReq := range s.ScanTargets {
 		paramdata := []attacker.ParamData{}
 		for _, paramAndValue := range strings.Split(attacker.GetStringBody(httpReq.Body), "&") {
@@ -52,16 +42,8 @@ func (s *scanner) Scan() { //tmpname いずれ変える
 				maxTypeName  string
 				maxTypeCount int
 			)
-			ss := strings.Split(paramAndValue, "=")
-			name, reqdb, getdatas :=
-				ss[0], db.OpenDatabase(), []getdata{}
-			reqdb.
-				Table("request_data").Select("Name, Value, count(Value) AS count").
-				Joins("LEFT JOIN requests ON requests.identifier = request_data.identifier").
-				Where("host = ? AND path = ? AND method = ? AND name = ?",
-					httpReq.URL.Host, httpReq.URL.Path, httpReq.Method, name).
-				Group("value").Order("count Desc").
-				Find(&getdatas)
+			name := strings.Split(paramAndValue, "=")[0]
+			getdatas := s.getDatas(httpReq, paramAndValue)
 			voting := map[string]int{"STRING": 0, "INT": 0, "BOOL": 0}
 			for _, data := range getdatas {
 				voting[s.getParamType(data.Value)] += data.Count
@@ -84,8 +66,37 @@ func (s *scanner) Scan() { //tmpname いずれ変える
 	}
 }
 
-func (s *scanner) s() {
+func (s *scanner) getDatas(httpReq http.Request, paramAndValue string) []getdata {
+	ss := strings.Split(paramAndValue, "=")
+	name, reqdb, getdatas :=
+		ss[0], db.OpenDatabase(), []getdata{}
+	reqdb.
+		Table("request_data").Select("Name, Value, count(Value) AS count").
+		Joins("LEFT JOIN requests ON requests.identifier = request_data.identifier").
+		Where("host = ? AND path = ? AND method = ? AND name = ?",
+			httpReq.URL.Host, httpReq.URL.Path, httpReq.Method, name).
+		Group("value").Order("count Desc").
+		Find(&getdatas)
+	return getdatas
+}
 
+func (s *scanner) getPayload(typeString string) [][]string {
+	payloads := [][]string{}
+	for _, name := range []string{
+		"inspection/int/int",
+		"inspection/int/int_zero",
+		"inspection/int/int_minus",
+		"inspection/int/int_operator",
+		"xss"} {
+		f, err := os.Open("./payload/" + name + ".txt")
+		if err != nil {
+			fmt.Println("error")
+		}
+		defer f.Close()
+		b, err := ioutil.ReadAll(f)
+		payloads = append(payloads, strings.Split(string(b), "\n"))
+	}
+	return payloads
 }
 
 func (s *scanner) getParamType(param string) string {
