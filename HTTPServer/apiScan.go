@@ -41,7 +41,7 @@ func Scan(c echo.Context) error {
 			if check_regexp(rehost, host.Host) {
 				req := r.GetRequest(host.Host)
 				s := scanner.New(req)
-				s.Scan()
+				s.Scan(c.Param("type"))
 			}
 		}
 	}()
