@@ -1,10 +1,7 @@
 package scanner
 
 import (
-	"fmt"
-	"io/ioutil"
 	"net/http"
-	"os"
 	"strconv"
 	"strings"
 
@@ -78,25 +75,6 @@ func (s *scanner) getDatas(httpReq http.Request, paramAndValue string) []getdata
 		Group("value").Order("count Desc").
 		Find(&getdatas)
 	return getdatas
-}
-
-func (s *scanner) getPayload(typeString string) [][]string {
-	payloads := [][]string{}
-	for _, name := range []string{
-		"inspection/int/int",
-		"inspection/int/int_zero",
-		"inspection/int/int_minus",
-		"inspection/int/int_operator",
-		"xss"} {
-		f, err := os.Open("./payload/" + name + ".txt")
-		if err != nil {
-			fmt.Println("error")
-		}
-		defer f.Close()
-		b, err := ioutil.ReadAll(f)
-		payloads = append(payloads, strings.Split(string(b), "\n"))
-	}
-	return payloads
 }
 
 func (s *scanner) getParamType(param string) string {
