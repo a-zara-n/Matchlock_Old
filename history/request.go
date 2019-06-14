@@ -20,6 +20,7 @@ type Request struct {
 
 func (r *Request) SetRequest(req *http.Request) {
 	db.Table = Request{}
+	req.URL.RawQuery = ""
 	r.Host, r.Method, r.Proto, r.URL, r.Path =
 		req.Host, req.Method, req.Proto, req.URL.String(), req.URL.Path
 	db.Insert(r)
