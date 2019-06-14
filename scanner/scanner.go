@@ -21,45 +21,69 @@ func (s *scanner) () {
 */
 var db = datastore.Database{Database: "./test.db"}
 
+const Inspection = "inspection"
+
 type getdata struct {
 	Name  string
 	Value string
 	Count int
 }
 
+func (s *scanner) setParamData(req http.Request, paramAndValues []string) []attacker.ParamData {
+	var (
+		maxTypeName  string
+		maxTypeCount int
+	)
+	getdatas := s.getDatas(req, paramAndValues[0])
+	voting := map[string]int{"STRING": 0, "INT": 0, "BOOL": 0}
+	for _, data := range getdatas {
+		voting[s.getParamType(data.Value)] += data.Count
+		if maxTypeCount < voting[s.getParamType(data.Value)] {
+			maxTypeCount, maxTypeName = voting[s.getParamType(data.Value)], s.getParamType(data.Value)
+		}
+	}
+	paramData := []attacker.ParamData{
+		{
+			Name:     strings.Split(paramAndValues[0], "=")[0],
+			Type:     maxTypeName,
+			DefaultV: getdatas[0].Value,
+		},
+	}
+	if len(paramAndValues) < 2 {
+		return paramData
+	}
+	return append(paramData, s.setParamData(req, paramAndValues[1:])...)
+}
+
+func (s *scanner) attackRun(reqs []http.Request, ps map[string]map[string][]string) {
+	/*
+		I think that you can remove go in this function, but the inspection efficiency drops a little.
+	*/
+	if len(reqs) > 1 {
+		go s.attackRun(reqs[1:], ps)
+	}
+	paramdata := []attacker.ParamData{}
+	requestBody := attacker.GetStringBody(reqs[0].Body)
+	if len(requestBody) < 1 {
+		return
+	}
+	paramdata = s.setParamData(reqs[0], strings.Split(requestBody, "&"))
+	go attacker.Attack(reqs[0], paramdata, ps)
+}
+
 func (s *scanner) Scan(typeString string) { //tmpname いずれ変える
-	payloads := s.getPayload(typeString)
-	for _, httpReq := range s.ScanTargets {
-		paramdata := []attacker.ParamData{}
-		for _, paramAndValue := range strings.Split(attacker.GetStringBody(httpReq.Body), "&") {
-			if len(paramAndValue) == 0 {
-				continue
+	switch typeString {
+	case Inspection:
+		p := attacker.Payload{}
+		var ps = map[string]map[string][]string{}
+		for _, ts := range p.GetTypeKeys(Inspection) {
+			ps[ts] = map[string][]string{}
+			for _, name := range p.GetFileName(ts) {
+				ps[ts][name] = []string{}
+				ps[ts][name] = p.GetPayload(ts, name)
 			}
-			var (
-				maxTypeName  string
-				maxTypeCount int
-			)
-			name := strings.Split(paramAndValue, "=")[0]
-			getdatas := s.getDatas(httpReq, paramAndValue)
-			voting := map[string]int{"STRING": 0, "INT": 0, "BOOL": 0}
-			for _, data := range getdatas {
-				voting[s.getParamType(data.Value)] += data.Count
-				if maxTypeCount < voting[s.getParamType(data.Value)] {
-					maxTypeCount, maxTypeName = voting[s.getParamType(data.Value)], s.getParamType(data.Value)
-				}
-			}
-			paramdata = append(paramdata, attacker.ParamData{
-				Name:     name,
-				Type:     maxTypeName,
-				DefaultV: getdatas[0].Value,
-			})
 		}
-		if len(paramdata) == 0 {
-			continue
-		}
-		for _, payload := range payloads {
-			attacker.Attack(httpReq, paramdata, payload)
-		}
+		s.attackRun(s.ScanTargets, ps)
 	}
 }
 
@@ -112,8 +136,7 @@ func (s *scanner) C() {
 
 }
 func New(scanTargets []http.Request) scanner {
-	s := scanner{
+	return scanner{
 		ScanTargets: scanTargets,
 	}
-	return s
 }

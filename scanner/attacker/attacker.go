@@ -16,23 +16,21 @@ type ParamData struct {
 	DefaultV string
 }
 
-type payload struct {
-	payload [][]string
-}
-
-func Attack(req http.Request, paramdata []ParamData, payload []string) {
+/*
+ Attack はattacker.goの関数を動かす仮の関数
+*/
+func Attack(req http.Request, paramdata []ParamData, ps map[string]map[string][]string) {
 	var (
-		body     []string
-		name     []string
-		defaultV = map[string]string{}
+		body      []string
+		names     []string
+		defaultVs = map[string]string{}
 	)
 	jar, _ := cookiejar.New(nil)
 	for _, pd := range paramdata {
 		body = append(body, pd.Name+"={{."+pd.Name+"}}")
-		name = append(name, pd.Name)
-		defaultV[pd.Name] = pd.DefaultV
+		names = append(names, pd.Name)
+		defaultVs[pd.Name] = pd.DefaultV
 	}
-
 	attack := attacker{
 		Request: &req,
 		client: &http.Client{
@@ -43,7 +41,17 @@ func Attack(req http.Request, paramdata []ParamData, payload []string) {
 		},
 		paramtmplate: template.Must(template.New("").Parse(strings.Join(body, "&"))),
 	}
-	attack.Cluster(name, defaultV, payload)
+	/*
+		You will lose some speed if you lose goroutines here.
+		If necessary, remove it.
+	*/
+	go func(at attacker) {
+		for _, datas := range ps {
+			for _, data := range datas {
+				go at.Cluster(names, defaultVs, data)
+			}
+		}
+	}(attack)
 
 }
 
@@ -130,7 +138,7 @@ func (a attacker) Cluster(name []string, defaultV map[string]string, payload []s
 			if err != nil {
 				panic(err)
 			}
-			fmt.Println(resp.Status)
+			//fmt.Println(resp.Status)
 			resp.Body.Close()
 			//time.Sleep(10 * time.Millisecond)
 		}
