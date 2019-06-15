@@ -5,9 +5,16 @@ import (
 	"fmt"
 	"html"
 	"html/template"
+	"io"
+	"math"
 	"net/http"
 	"net/http/cookiejar"
 	"strings"
+
+	"github.com/WestEast1st/Matchlock/extractor"
+	"github.com/WestEast1st/Matchlock/scanner/attacker/decid"
+	"github.com/WestEast1st/Matchlock/scanner/attacker/payload"
+	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
 type ParamData struct {
@@ -19,54 +26,78 @@ type ParamData struct {
 /*
  Attack はattacker.goの関数を動かす仮の関数
 */
-func Attack(req http.Request, paramdata []ParamData, ps map[string]map[string][]string) {
-	var (
-		body      []string
-		names     []string
-		defaultVs = map[string]string{}
-	)
-	jar, _ := cookiejar.New(nil)
-	for _, pd := range paramdata {
-		body = append(body, pd.Name+"={{."+pd.Name+"}}")
-		names = append(names, pd.Name)
-		defaultVs[pd.Name] = pd.DefaultV
+
+func setParamData(pdata []ParamData) ([]string, []string, map[string]string) {
+	body, name, defvlue :=
+		[]string{pdata[0].Name + "={{." + pdata[0].Name + "}}"},
+		[]string{pdata[0].Name},
+		map[string]string{pdata[0].Name: pdata[0].DefaultV}
+	if len(pdata) > 1 {
+		bodys, names, defvalues := setParamData(pdata[1:])
+		return append(body, bodys...), append(name, names...), merge(defvlue, defvalues)
 	}
-	attack := attacker{
-		Request: &req,
-		client: &http.Client{
-			Jar: jar,
-			CheckRedirect: func(req *http.Request, via []*http.Request) error {
-				return http.ErrUseLastResponse
-			},
+	return body, name, defvlue
+}
+
+func Attack(req http.Request, paramdata []ParamData, ps map[string]map[string][]string) {
+	bodys, names, defaultVs := setParamData(paramdata)
+	jar, _ := cookiejar.New(nil)
+	c := http.Client{
+		Jar: jar,
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
 		},
-		paramtmplate: template.Must(template.New("").Parse(strings.Join(body, "&"))),
+	}
+	res, err := c.Do(&req)
+
+	if err != nil {
+		fmt.Println("hoge")
+	}
+	var str string
+	str, res.Body = SeparationOfIOReadCloser(res.Body)
+	attack := attacker{
+		Request:      &req,
+		Response:     res,
+		ResponseBody: str,
+		client:       &c,
+		paramtmplate: template.Must(template.New("").Parse(strings.Join(bodys, "&"))),
 	}
 	/*
 		You will lose some speed if you lose goroutines here.
 		If necessary, remove it.
 	*/
 	go func(at attacker) {
-		for _, datas := range ps {
-			for _, data := range datas {
-				go at.Cluster(names, defaultVs, data)
+		var c int
+		for div, datas := range ps {
+			for types, data := range datas {
+				c += len(data)
+				p := payload.Payload{
+					Division: div,
+					Type:     types,
+					Data:     data,
+				}
+				go at.Cluster(names, defaultVs, p, paramdata)
 			}
 		}
+		fmt.Println(int(math.Pow(float64(c), float64(len(names)))))
 	}(attack)
 
 }
 
 type attacker struct {
 	Request      *http.Request
+	Response     *http.Response
+	ResponseBody string
 	client       *http.Client
 	paramtmplate *template.Template
 }
 
-func (a attacker) AllChange(name []string, defaultV map[string]string, payload []string) {
+func (a attacker) AllChange(name []string, defaultV map[string]string, payloadData payload.Payload) {
 	m := map[string]string{}
 	for _, nm := range name {
 		m[nm] = defaultV[nm]
 	}
-	for _, d := range payload {
+	for _, d := range payloadData.Data {
 		var buf bytes.Buffer
 		for _, nm := range name {
 			m[nm] = d
@@ -78,22 +109,21 @@ func (a attacker) AllChange(name []string, defaultV map[string]string, payload [
 			a.Request.URL.RawQuery = html.UnescapeString(buf.String())
 		}
 		resp, _ := a.client.Do(a.Request)
-
 		fmt.Println(html.UnescapeString(buf.String()))
-		resp = resp
+		resp.Body.Close()
 		//fmt.Println(GetStringBody(resp.Body))
 	}
 
 }
 
-func (a attacker) SimpleList(name []string, defaultV map[string]string, payload []string) {
+func (a attacker) SimpleList(name []string, defaultV map[string]string, payloadData payload.Payload) {
 	m := map[string]string{}
 	for _, nm := range name {
 		m[nm] = defaultV[nm]
 	}
 	for _, nm := range name {
 		tmp := m[nm]
-		for _, d := range payload {
+		for _, d := range payloadData.Data {
 			var buf bytes.Buffer
 			m[nm] = d
 			a.paramtmplate.Execute(&buf, m)
@@ -105,14 +135,15 @@ func (a attacker) SimpleList(name []string, defaultV map[string]string, payload 
 			resp, _ := a.client.Do(a.Request)
 			fmt.Println(a.Request.URL)
 			fmt.Println(GetStringBody(a.Request.Body))
-			resp = resp
+			resp.Body.Close()
+
 			//fmt.Println(GetStringBody(resp.Body))
 		}
 		m[nm] = tmp
 	}
 }
 
-func (a attacker) Cluster(name []string, defaultV map[string]string, payload []string) {
+func (a attacker) Cluster(name []string, defaultV map[string]string, payloadData payload.Payload, paramdata []ParamData) {
 	m := map[string]string{}
 	for _, nm := range name {
 		m[nm] = defaultV[nm]
@@ -120,9 +151,8 @@ func (a attacker) Cluster(name []string, defaultV map[string]string, payload []s
 	var function func(length int, i int, m map[string]string)
 	function = func(length int, i int, m map[string]string) {
 		a.Request.Close = true
-
 		if length > i {
-			for _, p := range payload {
+			for _, p := range payloadData.Data {
 				m[name[i]] = p
 				function(length, i+1, m)
 			}
@@ -139,9 +169,27 @@ func (a attacker) Cluster(name []string, defaultV map[string]string, payload []s
 				panic(err)
 			}
 			//fmt.Println(resp.Status)
+			res := lineDiff(a.ResponseBody, GetStringBody(resp.Body))
+			for _, v := range res {
+				decid.Decider(v, payloadData)
+			}
 			resp.Body.Close()
 			//time.Sleep(10 * time.Millisecond)
 		}
 	}
 	function(len(name), 0, m)
+}
+
+func lineDiff(src1, src2 string) []diffmatchpatch.Diff {
+	dmp := diffmatchpatch.New()
+	a, b, c := dmp.DiffLinesToChars(src1, src2)
+	diffs := dmp.DiffMain(a, b, false)
+	result := dmp.DiffCharsToLines(diffs, c)
+	return result
+}
+
+func SeparationOfIOReadCloser(b io.ReadCloser) (string, io.ReadCloser) {
+	bodyOfStr := extractor.GetStringBody(b)
+	b = extractor.GetIOReadCloser(bodyOfStr)
+	return bodyOfStr, b
 }
