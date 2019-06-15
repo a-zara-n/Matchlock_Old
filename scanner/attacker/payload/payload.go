@@ -1,4 +1,4 @@
-package attacker
+package payload
 
 import (
 	"fmt"
@@ -24,13 +24,16 @@ var (
 		"inspection": inspections,
 	}
 	payloads = map[string][]string{
-		InspectionInt:    {"operator", "zero", "float", "bigNumbers"},
-		InspectionString: {"tagstring", "special", "urlstring", "script", "event", "sql", "javascript", "command"},
+		InspectionInt:    {"operator"},
+		InspectionString: {"tagstring", "special", "urlstring", "script", "event", "sql", "javascript", "command", "float", "bigNumbers"},
 		InspectionBool:   {"bool"},
 	}
 )
 
 type Payload struct {
+	Division string
+	Type     string
+	Data     []string
 }
 
 func (p *Payload) GetTypeKeys(t string) []string {
