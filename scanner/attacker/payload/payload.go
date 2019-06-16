@@ -25,11 +25,12 @@ var (
 	}
 	payloads = map[string][]string{
 		InspectionInt:    {"operator"},
-		InspectionString: {"tagstring", "special", "urlstring", "script", "event", "sql", "javascript", "command", "float", "bigNumbers"},
+		InspectionString: {"tagstring", "special", "event", "sql"},
 		InspectionBool:   {"bool"},
 	}
 )
 
+//"tagstring", "special", "event", "sql", "javascript", "command", "bigNumbers"
 type Payload struct {
 	Division string
 	Type     string
