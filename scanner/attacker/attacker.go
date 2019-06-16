@@ -6,7 +6,6 @@ import (
 	"html"
 	"html/template"
 	"io"
-	"math"
 	"net/http"
 	"net/http/cookiejar"
 	"strings"
@@ -76,10 +75,10 @@ func Attack(req http.Request, paramdata []ParamData, ps map[string]map[string][]
 					Type:     types,
 					Data:     data,
 				}
-				go at.Cluster(names, defaultVs, p, paramdata)
+				go at.SimpleList(names, defaultVs, p)
 			}
 		}
-		fmt.Println(int(math.Pow(float64(c), float64(len(names)))))
+		//fmt.Println(int(math.Pow(float64(c), float64(len(names)))))
 	}(attack)
 
 }
@@ -133,8 +132,9 @@ func (a attacker) SimpleList(name []string, defaultV map[string]string, payloadD
 				a.Request.URL.RawQuery = html.UnescapeString(buf.String())
 			}
 			resp, _ := a.client.Do(a.Request)
-			fmt.Println(a.Request.URL)
-			fmt.Println(GetStringBody(a.Request.Body))
+			body := GetStringBody(resp.Body)
+			res := lineDiff(a.ResponseBody, body)
+			go decid.Decider(res, payloadData, *a.Request, buf.String())
 			resp.Body.Close()
 
 			//fmt.Println(GetStringBody(resp.Body))
@@ -143,7 +143,7 @@ func (a attacker) SimpleList(name []string, defaultV map[string]string, payloadD
 	}
 }
 
-func (a attacker) Cluster(name []string, defaultV map[string]string, payloadData payload.Payload, paramdata []ParamData) {
+func (a attacker) Cluster(name []string, defaultV map[string]string, payloadData payload.Payload) {
 	m := map[string]string{}
 	for _, nm := range name {
 		m[nm] = defaultV[nm]
@@ -169,10 +169,9 @@ func (a attacker) Cluster(name []string, defaultV map[string]string, payloadData
 				panic(err)
 			}
 			//fmt.Println(resp.Status)
-			res := lineDiff(a.ResponseBody, GetStringBody(resp.Body))
-			for _, v := range res {
-				decid.Decider(v, payloadData)
-			}
+			body := GetStringBody(resp.Body)
+			res := lineDiff(a.ResponseBody, body)
+			go decid.Decider(res, payloadData, *a.Request, buf.String())
 			resp.Body.Close()
 			//time.Sleep(10 * time.Millisecond)
 		}
