@@ -18,17 +18,15 @@ type Response struct {
 }
 
 func (r *Response) SetResponse(res *http.Response) {
-
-	resp := &Response{
+	db.Table = Request{}
+	db.Insert(&Response{
 		Identifier: r.Identifier,
 		Status:     res.Status,
 		StatusCode: res.StatusCode,
 		Proto:      res.Proto,
 		ProtoMajor: res.ProtoMajor,
 		ProtoMinor: res.ProtoMinor,
-	}
-	db.Table = Request{}
-	db.Insert(resp)
+	})
 }
 
 type ResponseHeader struct {
@@ -39,16 +37,17 @@ type ResponseHeader struct {
 }
 
 func (r *Response) SetResponseHeader(header http.Header) {
-
+	var insertHeader func(headerKeys []string)
 	db.Table = &ResponseHeader{}
-	for name, data := range header {
-		respH := &ResponseHeader{
+	insertHeader = func(hkeys []string) {
+		recursiveExec(hkeys, insertHeader)
+		db.Insert(&ResponseHeader{
 			Identifier: r.Identifier,
-			Name:       name,
-			Value:      strings.Join(data, ","),
-		}
-		db.Insert(respH)
+			Name:       hkeys[0],
+			Value:      strings.Join(header[hkeys[0]], ","),
+		})
 	}
+	insertHeader(getKeys(header))
 }
 
 type ResponseBody struct {
@@ -60,12 +59,11 @@ type ResponseBody struct {
 }
 
 func (r *Response) SetResponseBody(body string, length int64, tenc []string) {
-	respB := &ResponseBody{
+	db.Table = ResponseBody{}
+	db.Insert(&ResponseBody{
 		Identifier: r.Identifier,
 		Body:       body,
 		Encodetype: strings.Join(tenc, ","),
 		Length:     length,
-	}
-	db.Table = ResponseBody{}
-	db.Insert(respB)
+	})
 }

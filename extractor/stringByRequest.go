@@ -30,11 +30,10 @@ func GetHeader(h http.Header) []string {
 	}
 	sort.Strings(headerKey)
 	for _, v := range headerKey {
-		headerSlice =
-			append(
-				headerSlice,
-				strings.Join([]string{v, strings.Join(h[v], ",")}, ": "),
-			)
+		headerSlice = append(
+			headerSlice,
+			strings.Join([]string{v, strings.Join(h[v], ",")}, ": "),
+		)
 	}
 	return headerSlice
 }
@@ -47,12 +46,10 @@ func getQuery(rq string) string {
 }
 
 func getStartLine(r *http.Request) string {
-	return strings.Join(
-		[]string{
-			r.Method,
-			r.URL.Path,
-			getQuery(r.URL.RawQuery),
-			r.Proto,
-		},
-		" ")
+	return strings.Join([]string{
+		r.Method,
+		r.URL.Path,
+		getQuery(r.URL.RawQuery),
+		r.Proto,
+	}, " ")
 }

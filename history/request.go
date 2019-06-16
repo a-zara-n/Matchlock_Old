@@ -35,18 +35,18 @@ type RequestHeader struct {
 }
 
 func (r *Request) SetHeader(header http.Header) {
-	ise := r.IsEdit
-	id := r.Identifier
+	var insertHeader func(headerKeys []string)
 	db.Table = RequestHeader{}
-	for name, value := range header {
-		insHeader := &RequestHeader{
-			Identifier: id,
-			Name:       name,
-			Value:      quoteEscape(strings.Join(value, ",")),
-			IsEdit:     ise,
-		}
-		db.Insert(insHeader)
+	insertHeader = func(hkeys []string) {
+		recursiveExec(hkeys, insertHeader)
+		db.Insert(&RequestHeader{
+			Identifier: r.Identifier,
+			Name:       hkeys[0],
+			Value:      quoteEscape(strings.Join(header[hkeys[0]], ",")),
+			IsEdit:     r.IsEdit,
+		})
 	}
+	insertHeader(getKeys(header))
 }
 
 type RequestData struct {
@@ -59,26 +59,21 @@ type RequestData struct {
 }
 
 func (r *Request) SetData(bstr string, length int64, enctype []string) {
-	if bstr != "" {
-		id := r.Identifier
-		ise := r.IsEdit
-		db.Table = RequestData{}
-		for _, params := range strings.Split(bstr, "&") {
-			param := strings.Split(params, "=")
-			data := &RequestData{
-				Identifier:       id,
-				Name:             param[0],
-				Value:            quoteEscape(strings.Join(param[1:], "=")),
-				TransferEncoding: strings.Join(enctype, ","),
-				IsEdit:           ise,
-			}
-			db.Insert(data)
-		}
+	if bstr == "" {
+		return
 	}
-}
-
-func quoteEscape(str string) string {
-	str = strings.Replace(str, `"`, `\\\"`, -1)
-	str = strings.Replace(str, "'", `\\\'`, -1)
-	return str
+	var innsertData func(params []string)
+	db.Table = RequestData{}
+	innsertData = func(params []string) {
+		recursiveExec(params, innsertData)
+		param := strings.Split(params[0], "=")
+		db.Insert(&RequestData{
+			Identifier:       r.Identifier,
+			Name:             param[0],
+			Value:            quoteEscape(strings.Join(param[1:], "=")),
+			TransferEncoding: strings.Join(enctype, ","),
+			IsEdit:           r.IsEdit,
+		})
+	}
+	innsertData(strings.Split(bstr, "&"))
 }
