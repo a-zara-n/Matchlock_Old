@@ -1,14 +1,14 @@
 "
 '
-" or "A"="A
-' or 'A'='A
+"or"A"="A
+'or'A'='A
 "+or+"A"="A
 '+or+'A'='A
-1 or 1=1
-" : --
-'; --
+1+or+1=1
+"+:+--
+';+--
 /*
 //
 )))))))))))))))))))))
-%" or (sleep(1) AND 1) ; --
-%" or sleep(1) and "%
+hogera"+or+(sleep(0)+AND+1)+;+--
+hogera"+or+sleep(0)
