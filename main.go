@@ -40,6 +40,13 @@ var dbschema = []interface{}{
 }
 
 func main() {
+	// DB setting
+	go func() {
+		for _, v := range dbschema {
+			db.Table = v
+			db.InitMigration()
+		}
+	}()
 	// 基本情報の設定
 	app := cli.NewApp()
 	app.Name = title
@@ -63,12 +70,6 @@ func main() {
 
 	app.Action = func(c *cli.Context) {
 		fmt.Println(title)
-		go func() {
-			for _, v := range dbschema {
-				db.Table = v
-				db.InitMigration()
-			}
-		}()
 		go pr.Run()
 		go hs.Run()
 		go hh.Run()
