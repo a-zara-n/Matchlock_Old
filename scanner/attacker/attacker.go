@@ -48,7 +48,6 @@ func Attack(req http.Request, paramdata []ParamData, ps map[string]map[string][]
 		},
 	}
 	res, err := c.Do(&req)
-
 	if err != nil {
 		fmt.Println("hoge")
 	}
@@ -78,9 +77,7 @@ func Attack(req http.Request, paramdata []ParamData, ps map[string]map[string][]
 				go at.SimpleList(names, defaultVs, p)
 			}
 		}
-		//fmt.Println(int(math.Pow(float64(c), float64(len(names)))))
 	}(attack)
-
 }
 
 type attacker struct {
@@ -97,22 +94,11 @@ func (a attacker) AllChange(name []string, defaultV map[string]string, payloadDa
 		m[nm] = defaultV[nm]
 	}
 	for _, d := range payloadData.Data {
-		var buf bytes.Buffer
 		for _, nm := range name {
 			m[nm] = d
 		}
-		a.paramtmplate.Execute(&buf, m)
-		if a.Request.Method == "POST" {
-			a.Request.Body = GetIOReadCloser(html.UnescapeString(buf.String()))
-		} else {
-			a.Request.URL.RawQuery = html.UnescapeString(buf.String())
-		}
-		resp, _ := a.client.Do(a.Request)
-		fmt.Println(html.UnescapeString(buf.String()))
-		resp.Body.Close()
-		//fmt.Println(GetStringBody(resp.Body))
+		a.scanClientRun(m, payloadData)
 	}
-
 }
 
 func (a attacker) SimpleList(name []string, defaultV map[string]string, payloadData payload.Payload) {
@@ -123,21 +109,8 @@ func (a attacker) SimpleList(name []string, defaultV map[string]string, payloadD
 	for _, nm := range name {
 		tmp := m[nm]
 		for _, d := range payloadData.Data {
-			var buf bytes.Buffer
 			m[nm] = d
-			a.paramtmplate.Execute(&buf, m)
-			if a.Request.Method == "POST" {
-				a.Request.Body = GetIOReadCloser(html.UnescapeString(buf.String()))
-			} else {
-				a.Request.URL.RawQuery = html.UnescapeString(buf.String())
-			}
-			resp, _ := a.client.Do(a.Request)
-			body := GetStringBody(resp.Body)
-			res := lineDiff(a.ResponseBody, body)
-			go decid.Decider(res, payloadData, *a.Request, buf.String())
-			resp.Body.Close()
-
-			//fmt.Println(GetStringBody(resp.Body))
+			a.scanClientRun(m, payloadData)
 		}
 		m[nm] = tmp
 	}
@@ -157,38 +130,45 @@ func (a attacker) Cluster(name []string, defaultV map[string]string, payloadData
 				function(length, i+1, m)
 			}
 		} else {
-			var buf bytes.Buffer
-			a.paramtmplate.Execute(&buf, m)
-			if a.Request.Method == "POST" {
-				a.Request.Body = GetIOReadCloser(html.UnescapeString(buf.String()))
-			} else {
-				a.Request.URL.RawQuery = html.UnescapeString(buf.String())
-			}
-			resp, err := a.client.Do(a.Request)
-			if err != nil {
-				panic(err)
-			}
-			//fmt.Println(resp.Status)
-			body := GetStringBody(resp.Body)
-			res := lineDiff(a.ResponseBody, body)
-			go decid.Decider(res, payloadData, *a.Request, buf.String())
-			resp.Body.Close()
-			//time.Sleep(10 * time.Millisecond)
+			a.scanClientRun(m, payloadData)
 		}
 	}
 	function(len(name), 0, m)
 }
 
+func (a attacker) scanClientRun(submitValues map[string]string, payloadData payload.Payload) {
+	var buf bytes.Buffer
+	a.paramtmplate.Execute(&buf, submitValues)
+	a.setSubmitValue(html.UnescapeString(buf.String()))
+	resp := a.sender()
+	a.decider(resp.Body, payloadData, buf.String())
+	resp.Body.Close()
+}
+
+func (a attacker) sender() *http.Response {
+	resp, err := a.client.Do(a.Request)
+	if err != nil {
+		panic(err)
+	}
+	return resp
+}
+
+func (a attacker) setSubmitValue(submitValue string) {
+	if a.Request.Method == "POST" {
+		a.Request.Body = extractor.GetIOReadCloser(submitValue)
+	} else {
+		a.Request.URL.RawQuery = submitValue
+	}
+}
+
+func (a attacker) decider(resp io.ReadCloser, payloadData payload.Payload, input string) {
+	go decid.Decider(
+		lineDiff(a.ResponseBody, extractor.GetStringBody(resp)), payloadData, *a.Request, input,
+	)
+}
+
 func lineDiff(src1, src2 string) []diffmatchpatch.Diff {
 	dmp := diffmatchpatch.New()
 	a, b, c := dmp.DiffLinesToChars(src1, src2)
-	diffs := dmp.DiffMain(a, b, false)
-	result := dmp.DiffCharsToLines(diffs, c)
-	return result
-}
-
-func SeparationOfIOReadCloser(b io.ReadCloser) (string, io.ReadCloser) {
-	bodyOfStr := extractor.GetStringBody(b)
-	b = extractor.GetIOReadCloser(bodyOfStr)
-	return bodyOfStr, b
+	return dmp.DiffCharsToLines(dmp.DiffMain(a, b, false), c)
 }
