@@ -1,12 +1,14 @@
 package scanner
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
 
 	"github.com/WestEast1st/Matchlock/datastore"
 	"github.com/WestEast1st/Matchlock/scanner/attacker"
+	"github.com/WestEast1st/Matchlock/scanner/attacker/payload"
 )
 
 type scanner struct {
@@ -74,15 +76,22 @@ func (s *scanner) attackRun(reqs []http.Request, ps map[string]map[string][]stri
 func (s *scanner) Scan(typeString string) { //tmpname いずれ変える
 	switch typeString {
 	case Inspection:
-		p := attacker.Payload{}
+		var c int
+		p := payload.Payload{}
 		var ps = map[string]map[string][]string{}
 		for _, ts := range p.GetTypeKeys(Inspection) {
 			ps[ts] = map[string][]string{}
 			for _, name := range p.GetFileName(ts) {
 				ps[ts][name] = []string{}
 				ps[ts][name] = p.GetPayload(ts, name)
+				c += len(ps[ts][name])
 			}
 		}
+		fmt.Println("# [INFO] The scan target is the following URL")
+		for _, req := range s.ScanTargets {
+			fmt.Println("	- ", req.URL.String())
+		}
+		fmt.Println("=============================================\n")
 		s.attackRun(s.ScanTargets, ps)
 	}
 }
