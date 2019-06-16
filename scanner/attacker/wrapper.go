@@ -6,14 +6,6 @@ import (
 	"github.com/WestEast1st/Matchlock/extractor"
 )
 
-func GetStringBody(b io.ReadCloser) string {
-	return extractor.GetStringBody(b)
-}
-
-func GetIOReadCloser(b string) io.ReadCloser {
-	return extractor.GetIOReadCloser(b)
-}
-
 func merge(m1, m2 map[string]string) map[string]string {
 	ans := map[string]string{}
 	for k, v := range m1 {
@@ -23,4 +15,10 @@ func merge(m1, m2 map[string]string) map[string]string {
 		ans[k] = v
 	}
 	return (ans)
+}
+
+func SeparationOfIOReadCloser(b io.ReadCloser) (string, io.ReadCloser) {
+	bodyOfStr := extractor.GetStringBody(b)
+	b = extractor.GetIOReadCloser(bodyOfStr)
+	return bodyOfStr, b
 }
