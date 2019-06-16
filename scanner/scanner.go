@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/WestEast1st/Matchlock/datastore"
+	"github.com/WestEast1st/Matchlock/extractor"
 	"github.com/WestEast1st/Matchlock/scanner/attacker"
 	"github.com/WestEast1st/Matchlock/scanner/attacker/payload"
 )
@@ -44,13 +45,11 @@ func (s *scanner) setParamData(req http.Request, paramAndValues []string) []atta
 			maxTypeCount, maxTypeName = voting[s.getParamType(data.Value)], s.getParamType(data.Value)
 		}
 	}
-	paramData := []attacker.ParamData{
-		{
-			Name:     strings.Split(paramAndValues[0], "=")[0],
-			Type:     maxTypeName,
-			DefaultV: getdatas[0].Value,
-		},
-	}
+	paramData := []attacker.ParamData{{
+		Name:     strings.Split(paramAndValues[0], "=")[0],
+		Type:     maxTypeName,
+		DefaultV: getdatas[0].Value,
+	}}
 	if len(paramAndValues) < 2 {
 		return paramData
 	}
@@ -65,7 +64,7 @@ func (s *scanner) attackRun(reqs []http.Request, ps map[string]map[string][]stri
 		go s.attackRun(reqs[1:], ps)
 	}
 	paramdata := []attacker.ParamData{}
-	requestBody := attacker.GetStringBody(reqs[0].Body)
+	requestBody := extractor.GetStringBody(reqs[0].Body)
 	if len(requestBody) < 1 {
 		return
 	}
