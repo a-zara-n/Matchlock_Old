@@ -24,28 +24,51 @@ func (r *Request) GetRequest(host string) []http.Request {
 		Select("Distinct method,url,proto").
 		Where("host LIKE ?", likehost).
 		Find(&request)
-	retReq := []http.Request{}
-	for _, r := range request {
-		u, _ := url.Parse(r.URL)
-		tr := http.Request{
-			Method: r.Method,
-			Host:   host,
-			URL:    u,
-			Proto:  r.Proto,
-			Header: http.Header{},
-		} //tmprequest
-		rh, rd, strs := RequestHeader{}, RequestData{}, []string{}
-		for _, h := range rh.GetHeader(tr.URL.Host, tr.URL.Path, r.Method) {
-			tr.Header.Add(h.Name, h.Value)
-		}
+	return r.getRequests(host, request)
+}
 
-		for _, d := range rd.GetData(tr.URL.Host, tr.URL.Path, r.Method) {
-			strs = append(strs, d.Name+"="+d.Value)
-		}
-		tr.Body = extractor.GetIOReadCloser(strings.Join(strs, "&"))
-		retReq = append(retReq, tr)
+func (r *Request) getRequests(host string, requests []Request) []http.Request {
+	u, _ := url.Parse(requests[0].URL)
+	rh, rd := RequestHeader{}, RequestData{}
+	tr := []http.Request{{
+		Method: requests[0].Method,
+		Host:   host,
+		URL:    u,
+		Proto:  requests[0].Proto,
+		Header: setHeader(http.Header{}, rh.GetHeader(u.Host, u.Path, requests[0].Method)),
+		Body: extractor.GetIOReadCloser(strings.Join(
+			getBodySlice(rd.GetData(u.Host, u.Path, requests[0].Method)), "&")),
+	}}
+	if len(requests) > 1 {
+		return append(tr, r.getRequests(host, requests[1:])...)
 	}
-	return retReq
+	return tr
+}
+
+func setHeader(header http.Header, hs []RequestHeader) http.Header {
+	for _, h := range hs {
+		header.Add(h.Name, h.Value)
+	}
+	return header
+}
+
+func getBodySlice(d []RequestData) []string {
+	data := []string{d[0].Name + "=" + d[0].Value}
+	if len(d) > 1 {
+		return append(data, getBodySlice(d[1:])...)
+	}
+	return data
+}
+
+func merge(m1, m2 map[string]string) map[string]string {
+	ans := map[string]string{}
+	for k, v := range m1 {
+		ans[k] = v
+	}
+	for k, v := range m2 {
+		ans[k] = v
+	}
+	return (ans)
 }
 
 type RequestHeader struct {
