@@ -3,7 +3,6 @@ package scanner
 import (
 	"fmt"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"github.com/WestEast1st/Matchlock/datastore"
@@ -33,7 +32,7 @@ func (s *scanner) setParamData(req http.Request, paramAndValues []string) []atta
 	)
 	getdatas := s.getDatas(req, paramAndValues[0])
 	for _, data := range getdatas {
-		t = s.getParamType(data.Value)
+		t = getParamType(data.Value)
 		voting[t] += data.Count
 		if maxTypeCount < voting[t] {
 			maxTypeCount, maxTypeName = voting[t], t
@@ -98,36 +97,6 @@ func (s *scanner) getDatas(httpReq http.Request, paramAndValue string) []getdata
 		Group("value").Order("count Desc").
 		Find(&getdatas)
 	return getdatas
-}
-
-func (s *scanner) getParamType(param string) string {
-	if s.isInt(param) {
-		return "INT"
-	} else if s.isBool(param) {
-		return "BOOL"
-	}
-	return "STRING"
-}
-
-func (s *scanner) isInt(param string) bool {
-	convI, _ := strconv.ParseInt(param, 10, 64)
-	if convI == 0 {
-		if strconv.FormatInt(convI, 10) != param {
-			return false
-		}
-	}
-	return true
-}
-
-func (s *scanner) isBool(param string) bool {
-	param = strings.ToLower(param)
-	convB, _ := strconv.ParseBool(param)
-	if !convB {
-		if strconv.FormatBool(convB) != param {
-			return false
-		}
-	}
-	return true
 }
 
 func New(scanTargets []http.Request) scanner {
