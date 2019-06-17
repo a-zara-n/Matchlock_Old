@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/WestEast1st/Matchlock/datastore"
 	"github.com/WestEast1st/Matchlock/extractor"
 )
 
@@ -16,11 +17,9 @@ type Request struct {
 
 func (r *Request) GetRequest(host string) []http.Request {
 	likehost := "%" + host + "%"
-	db.Table = Request{}
-	reqdb := db.OpenDatabase()
+	db := datastore.DB.OpenDatabase()
 	var request []Request
-	reqdb.
-		Table("Requests").
+	db.Table("Requests").
 		Select("Distinct method,url,proto").
 		Where("host LIKE ?", likehost).
 		Find(&request)
@@ -60,17 +59,6 @@ func getBodySlice(d []RequestData) []string {
 	return data
 }
 
-func merge(m1, m2 map[string]string) map[string]string {
-	ans := map[string]string{}
-	for k, v := range m1 {
-		ans[k] = v
-	}
-	for k, v := range m2 {
-		ans[k] = v
-	}
-	return (ans)
-}
-
 type RequestHeader struct {
 	Name   string
 	Value  string
@@ -78,10 +66,9 @@ type RequestHeader struct {
 }
 
 func (r *RequestHeader) GetHeader(host string, path string, method string) []RequestHeader {
-	reqdb := db.OpenDatabase()
+	db := datastore.DB.OpenDatabase()
 	var requestHeader []RequestHeader
-	reqdb.
-		Table("request_headers").
+	db.Table("request_headers").
 		Select("name, value, request_headers.is_edit AS is_edit").
 		Joins("LEFT JOIN requests ON requests.identifier = request_headers.identifier").
 		Where("host = ? AND path = ? AND method = ?", host, path, method).
@@ -97,10 +84,9 @@ type RequestData struct {
 }
 
 func (r *RequestData) GetData(host string, path string, method string) []RequestData {
-	reqdb := db.OpenDatabase()
+	db := datastore.DB.OpenDatabase()
 	var requestData []RequestData
-	reqdb.
-		Table("request_data").
+	db.Table("request_data").
 		Select("name, value, request_data.is_edit AS is_edit").
 		Joins("LEFT JOIN requests ON requests.identifier = request_data.identifier").
 		Where("host = ? AND path = ? AND method = ?", host, path, method).

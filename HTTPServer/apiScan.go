@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"html/template"
 	"net/http"
-	"regexp"
 
+	"github.com/WestEast1st/Matchlock/shared"
+
+	"github.com/WestEast1st/Matchlock/datastore"
 	"github.com/WestEast1st/Matchlock/scanner"
 	"github.com/labstack/echo"
 )
@@ -17,28 +19,22 @@ func Scan(c echo.Context) error {
 		//typeはAllやFuzzing 脆弱性名を利用する
 		type 	= c.Param("type")
 	*/
-	d := struct {
-		Host string
-	}{
-		Host: c.Param("domain"),
-	}
+	var buf bytes.Buffer
 	regexpString := `^[0-9a-zA-Z]*\.?({{.Host}})(\.+[0-9a-zA-Z]+)*$`
 	tpl, _ := template.New("").Parse(regexpString)
-	var buf bytes.Buffer
-	tpl.Execute(&buf, d)
+	tpl.Execute(&buf, struct{ Host string }{Host: c.Param("domain")})
 	rehost := buf.String()
 	r := scanner.Request{}
 	hosts := []struct {
 		Host string
 	}{}
 	go func() {
-		hostdb := db.OpenDatabase()
-		hostdb.Table("requests").
+		db := datastore.DB.OpenDatabase()
+		db.Table("requests").
 			Select("DISTINCT host").
 			Find(&hosts)
 		for _, host := range hosts {
-
-			if check_regexp(rehost, host.Host) {
+			if shared.CheckRegexp(rehost, host.Host) {
 				req := r.GetRequest(host.Host)
 				s := scanner.New(req)
 				s.Scan(c.Param("type"))
@@ -49,8 +45,4 @@ func Scan(c echo.Context) error {
 	res.Header().Set("Content-Type", "application/json")
 	c.JSON(http.StatusOK, "{\"OK\":\"ok\"}")
 	return nil
-}
-
-func check_regexp(reg, str string) bool {
-	return regexp.MustCompile(reg).Match([]byte(str))
 }

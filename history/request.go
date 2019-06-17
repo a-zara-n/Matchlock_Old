@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/WestEast1st/Matchlock/datastore"
+	"github.com/WestEast1st/Matchlock/shared"
 	"github.com/jinzhu/gorm"
 )
 
@@ -19,11 +21,10 @@ type Request struct {
 }
 
 func (r *Request) SetRequest(req *http.Request) {
-	db.Table = Request{}
 	req.URL.RawQuery = ""
 	r.Host, r.Method, r.Proto, r.URL, r.Path =
 		req.Host, req.Method, req.Proto, req.URL.String(), req.URL.Path
-	db.Insert(r)
+	datastore.DB.Insert(r)
 }
 
 type RequestHeader struct {
@@ -36,17 +37,16 @@ type RequestHeader struct {
 
 func (r *Request) SetHeader(header http.Header) {
 	var insertHeader func(headerKeys []string)
-	db.Table = RequestHeader{}
 	insertHeader = func(hkeys []string) {
-		recursiveExec(hkeys, insertHeader)
-		db.Insert(&RequestHeader{
+		shared.RecursiveExec(hkeys, insertHeader)
+		datastore.DB.Insert(&RequestHeader{
 			Identifier: r.Identifier,
 			Name:       hkeys[0],
-			Value:      quoteEscape(strings.Join(header[hkeys[0]], ",")),
+			Value:      shared.QuoteEscape(strings.Join(header[hkeys[0]], ",")),
 			IsEdit:     r.IsEdit,
 		})
 	}
-	insertHeader(getKeys(header))
+	insertHeader(shared.GetKeys(header))
 }
 
 type RequestData struct {
@@ -63,14 +63,13 @@ func (r *Request) SetData(bstr string, length int64, enctype []string) {
 		return
 	}
 	var innsertData func(params []string)
-	db.Table = RequestData{}
 	innsertData = func(params []string) {
-		recursiveExec(params, innsertData)
+		shared.RecursiveExec(params, innsertData)
 		param := strings.Split(params[0], "=")
-		db.Insert(&RequestData{
+		datastore.DB.Insert(&RequestData{
 			Identifier:       r.Identifier,
 			Name:             param[0],
-			Value:            quoteEscape(strings.Join(param[1:], "=")),
+			Value:            shared.QuoteEscape(strings.Join(param[1:], "=")),
 			TransferEncoding: strings.Join(enctype, ","),
 			IsEdit:           r.IsEdit,
 		})

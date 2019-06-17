@@ -7,6 +7,8 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 )
 
+var DB = Database{Database: "./test.db"}
+
 type Database struct {
 	Database string
 	Table    interface{}

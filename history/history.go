@@ -3,6 +3,7 @@ package history
 import (
 	"net/http"
 
+	"github.com/WestEast1st/Matchlock/datastore"
 	"github.com/jinzhu/gorm"
 )
 
@@ -24,8 +25,7 @@ func (h *History) MemoryRequest(r *http.Request, isEdit bool, bstr string) {
 	go req.SetRequest(r)
 	go req.SetHeader(r.Header)
 	go req.SetData(bstr, r.ContentLength, r.TransferEncoding)
-	db.Table = History{}
-	db.Insert(h)
+	datastore.DB.Insert(h)
 }
 
 func (h *History) MemoryResponse(r *http.Response, bstr string) {

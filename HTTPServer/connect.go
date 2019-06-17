@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/WestEast1st/Matchlock/channel"
+	"github.com/WestEast1st/Matchlock/datastore"
 	"github.com/WestEast1st/Matchlock/extractor"
 	"github.com/gorilla/websocket"
 	"github.com/labstack/echo"
@@ -26,37 +27,39 @@ type connect struct {
 	request *http.Request
 }
 
-func (c *connect) Run() {
-	reqchan := c.channel.Request
-	go func() {
-		var count int
-		hisdb := db.OpenDatabase()
+func (c *connect) historySocket() {
+	var count int
+	hisdb := datastore.DB.OpenDatabase()
+	hisdb.Table("requests").Count(&count)
+	historyCount = count
+	time.Sleep(5 * time.Second)
+	for {
 		hisdb.Table("requests").Count(&count)
-		historyCount = count
-		time.Sleep(5 * time.Second)
-		for {
-			hisdb.Table("requests").Count(&count)
-			if count != historyCount && historyCount < count {
-				historys := getHistory(historyCount + 1)
-				res, _ := json.Marshal(APIresponse{Data: historys})
-				historyCount += len(historys)
-				mes := Message{
-					Type: "History",
-					Data: string(res),
+		if count != historyCount && historyCount < count {
+			historys := getHistory(historyCount + 1)
+			res, _ := json.Marshal(APIresponse{Data: historys})
+			historyCount += len(historys)
+			mes := Message{
+				Type: "History",
+				Data: string(res),
+			}
+			for client := range c.clients {
+				select {
+				case client.send <- mes:
+				default:
+					delete(c.clients, client)
+					close(client.send)
 				}
-				for client := range c.clients {
-					select {
-					case client.send <- mes:
-					default:
-						delete(c.clients, client)
-						close(client.send)
-					}
-				}
-				time.Sleep(50 * time.Millisecond)
 			}
 			time.Sleep(50 * time.Millisecond)
 		}
-	}()
+		time.Sleep(50 * time.Millisecond)
+	}
+}
+
+func (c *connect) Run() {
+	reqchan := c.channel.Request
+	go c.historySocket()
 	for {
 		select {
 		case client := <-c.join:
@@ -66,7 +69,6 @@ func (c *connect) Run() {
 			//退室
 			delete(c.clients, client)
 			close(client.send)
-
 		case msg := <-c.forward:
 			c.request = extractor.GetRequestByString(msg.Data, c.request)
 			reqchan.HMgToHsSignal <- c.request
@@ -93,11 +95,7 @@ func (c *connect) Run() {
 var upgrader = &websocket.Upgrader{}
 
 func (c *connect) ServeHTTP(cont echo.Context) error {
-	var (
-		w   = cont.Response()
-		req = cont.Request()
-	)
-	socket, err := upgrader.Upgrade(w, req, nil)
+	socket, err := upgrader.Upgrade(cont.Response(), cont.Request(), nil)
 	if err != nil {
 		log.Fatal("ServeHTTP:", err)
 		return err

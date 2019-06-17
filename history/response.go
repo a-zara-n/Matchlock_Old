@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/WestEast1st/Matchlock/datastore"
+	"github.com/WestEast1st/Matchlock/shared"
 	"github.com/jinzhu/gorm"
 )
 
@@ -18,8 +20,7 @@ type Response struct {
 }
 
 func (r *Response) SetResponse(res *http.Response) {
-	db.Table = Request{}
-	db.Insert(&Response{
+	datastore.DB.Insert(&Response{
 		Identifier: r.Identifier,
 		Status:     res.Status,
 		StatusCode: res.StatusCode,
@@ -38,16 +39,15 @@ type ResponseHeader struct {
 
 func (r *Response) SetResponseHeader(header http.Header) {
 	var insertHeader func(headerKeys []string)
-	db.Table = &ResponseHeader{}
 	insertHeader = func(hkeys []string) {
-		recursiveExec(hkeys, insertHeader)
-		db.Insert(&ResponseHeader{
+		shared.RecursiveExec(hkeys, insertHeader)
+		datastore.DB.Insert(&ResponseHeader{
 			Identifier: r.Identifier,
 			Name:       hkeys[0],
 			Value:      strings.Join(header[hkeys[0]], ","),
 		})
 	}
-	insertHeader(getKeys(header))
+	insertHeader(shared.GetKeys(header))
 }
 
 type ResponseBody struct {
@@ -59,8 +59,7 @@ type ResponseBody struct {
 }
 
 func (r *Response) SetResponseBody(body string, length int64, tenc []string) {
-	db.Table = ResponseBody{}
-	db.Insert(&ResponseBody{
+	datastore.DB.Insert(&ResponseBody{
 		Identifier: r.Identifier,
 		Body:       body,
 		Encodetype: strings.Join(tenc, ","),

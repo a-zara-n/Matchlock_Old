@@ -1,6 +1,9 @@
 package history
 
-import "github.com/jinzhu/gorm"
+import (
+	"github.com/WestEast1st/Matchlock/datastore"
+	"github.com/jinzhu/gorm"
+)
 
 //Cookie represents the schema when saving to DB.
 type Cookie struct {
@@ -18,13 +21,11 @@ type Cookie struct {
 func (c Cookie) SetCookie(name string, value string) {
 	c.Name = name
 	c.Value = value
-	db.Table = RequestData{}
-	db.Insert(c)
+	datastore.DB.Insert(c)
 }
 
 func (c Cookie) GetCookie(domain string, path string) []Cookie {
-	db.Table = Cookie{}
-	cdb := db.OpenDatabase()
+	cdb := datastore.DB.OpenDatabase()
 	var cookies []Cookie
 	cdb.Select("*").
 		Where("domain = ? AND path LIKE ? ", domain, path+"%").

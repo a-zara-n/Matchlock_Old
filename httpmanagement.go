@@ -8,6 +8,7 @@ import (
 	"github.com/WestEast1st/Matchlock/channel"
 	"github.com/WestEast1st/Matchlock/extractor"
 	"github.com/WestEast1st/Matchlock/history"
+	"github.com/WestEast1st/Matchlock/shared"
 )
 
 //HTTPmanager is controls HTTP acquired by proxy etc.
@@ -33,7 +34,7 @@ func (h *HTTPmanager) Run() {
 			httphistory := history.History{
 				IsEdit: h.channels.IsForward,
 			}
-			httphistory.SetIdentifier(history.GetSha1(req.URL.String()))
+			httphistory.SetIdentifier(shared.GetSha1(req.URL.String()))
 			go httphistory.MemoryRequest(req, false, requests.SetRequest(req))
 			if h.channels.IsForward {
 				reqchan.HMgToHsSignal <- req

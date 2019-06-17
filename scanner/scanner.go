@@ -16,14 +16,6 @@ type scanner struct {
 	ScanTargets []http.Request
 }
 
-/*
-tmp
-func (s *scanner) () {
-
-}
-*/
-var db = datastore.Database{Database: "./test.db"}
-
 const Inspection = "inspection"
 
 type getdata struct {
@@ -36,13 +28,15 @@ func (s *scanner) setParamData(req http.Request, paramAndValues []string) []atta
 	var (
 		maxTypeName  string
 		maxTypeCount int
+		t            string //type
+		voting       = map[string]int{"STRING": 0, "INT": 0, "BOOL": 0}
 	)
 	getdatas := s.getDatas(req, paramAndValues[0])
-	voting := map[string]int{"STRING": 0, "INT": 0, "BOOL": 0}
 	for _, data := range getdatas {
-		voting[s.getParamType(data.Value)] += data.Count
-		if maxTypeCount < voting[s.getParamType(data.Value)] {
-			maxTypeCount, maxTypeName = voting[s.getParamType(data.Value)], s.getParamType(data.Value)
+		t = s.getParamType(data.Value)
+		voting[t] += data.Count
+		if maxTypeCount < voting[t] {
+			maxTypeCount, maxTypeName = voting[t], t
 		}
 	}
 	paramData := []attacker.ParamData{{
@@ -75,7 +69,6 @@ func (s *scanner) attackRun(reqs []http.Request, ps map[string]map[string][]stri
 func (s *scanner) Scan(typeString string) { //tmpname いずれ変える
 	switch typeString {
 	case Inspection:
-		var c int
 		p := payload.Payload{}
 		var ps = map[string]map[string][]string{}
 		for _, ts := range p.GetTypeKeys(Inspection) {
@@ -83,7 +76,6 @@ func (s *scanner) Scan(typeString string) { //tmpname いずれ変える
 			for _, name := range p.GetFileName(ts) {
 				ps[ts][name] = []string{}
 				ps[ts][name] = p.GetPayload(ts, name)
-				c += len(ps[ts][name])
 			}
 		}
 		fmt.Println("# [INFO] The scan target is the following URL")
@@ -97,10 +89,9 @@ func (s *scanner) Scan(typeString string) { //tmpname いずれ変える
 
 func (s *scanner) getDatas(httpReq http.Request, paramAndValue string) []getdata {
 	ss := strings.Split(paramAndValue, "=")
-	name, reqdb, getdatas :=
-		ss[0], db.OpenDatabase(), []getdata{}
-	reqdb.
-		Table("request_data").Select("Name, Value, count(Value) AS count").
+	name, db, getdatas :=
+		ss[0], datastore.DB.OpenDatabase(), []getdata{}
+	db.Table("request_data").Select("Name, Value, count(Value) AS count").
 		Joins("LEFT JOIN requests ON requests.identifier = request_data.identifier").
 		Where("host = ? AND path = ? AND method = ? AND name = ?",
 			httpReq.URL.Host, httpReq.URL.Path, httpReq.Method, name).
@@ -121,8 +112,7 @@ func (s *scanner) getParamType(param string) string {
 func (s *scanner) isInt(param string) bool {
 	convI, _ := strconv.ParseInt(param, 10, 64)
 	if convI == 0 {
-		convS := strconv.FormatInt(convI, 10)
-		if convS != param {
+		if strconv.FormatInt(convI, 10) != param {
 			return false
 		}
 	}
@@ -133,18 +123,13 @@ func (s *scanner) isBool(param string) bool {
 	param = strings.ToLower(param)
 	convB, _ := strconv.ParseBool(param)
 	if !convB {
-		convS := strconv.FormatBool(convB)
-		if convS != param {
+		if strconv.FormatBool(convB) != param {
 			return false
 		}
 	}
 	return true
 }
-func (s *scanner) C() {
 
-}
 func New(scanTargets []http.Request) scanner {
-	return scanner{
-		ScanTargets: scanTargets,
-	}
+	return scanner{ScanTargets: scanTargets}
 }
