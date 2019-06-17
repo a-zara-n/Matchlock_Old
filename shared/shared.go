@@ -27,7 +27,8 @@ func SeparationOfIOReadCloser(b io.ReadCloser) (string, io.ReadCloser) {
 }
 
 func CheckRegexp(reg, str string) bool {
-	return regexp.MustCompile(reg).Match([]byte(str))
+	r := regexp.MustCompile(reg)
+	return r.MatchString(str)
 }
 
 func GetKeys(maps map[string][]string) []string {
@@ -45,8 +46,10 @@ func QuoteEscape(str string) string {
 	return str
 }
 
-func RecursiveExec(slice []string, fun func(slice []string)) {
+func RecursiveExec(slice []string, fun func(slice []string)) int {
 	if len(slice) > 1 {
 		go fun(slice[1:])
+		return len(slice)
 	}
+	return 1
 }
