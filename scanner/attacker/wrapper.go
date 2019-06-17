@@ -1,24 +1,11 @@
 package attacker
 
 import (
-	"io"
-
-	"github.com/WestEast1st/Matchlock/extractor"
+	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
-func merge(m1, m2 map[string]string) map[string]string {
-	ans := map[string]string{}
-	for k, v := range m1 {
-		ans[k] = v
-	}
-	for k, v := range m2 {
-		ans[k] = v
-	}
-	return (ans)
-}
-
-func SeparationOfIOReadCloser(b io.ReadCloser) (string, io.ReadCloser) {
-	bodyOfStr := extractor.GetStringBody(b)
-	b = extractor.GetIOReadCloser(bodyOfStr)
-	return bodyOfStr, b
+func lineDiff(src1, src2 string) []diffmatchpatch.Diff {
+	dmp := diffmatchpatch.New()
+	a, b, c := dmp.DiffLinesToChars(src1, src2)
+	return dmp.DiffCharsToLines(dmp.DiffMain(a, b, false), c)
 }
