@@ -1,0 +1,25 @@
+package attacker
+
+import "github.com/WestEast1st/Matchlock/shared"
+
+type ParamData struct {
+	Name     string
+	Type     string
+	DefaultV string
+}
+
+/*
+ Attack はattacker.goの関数を動かす仮の関数
+*/
+
+func setParamData(pdata []ParamData) ([]string, []string, map[string]string) {
+	body, name, defvlue :=
+		[]string{pdata[0].Name + "={{." + pdata[0].Name + "}}"},
+		[]string{pdata[0].Name},
+		map[string]string{pdata[0].Name: pdata[0].DefaultV}
+	if len(pdata) > 1 {
+		bodys, names, defvalues := setParamData(pdata[1:])
+		return append(body, bodys...), append(name, names...), shared.Merge(defvlue, defvalues)
+	}
+	return body, name, defvlue
+}
