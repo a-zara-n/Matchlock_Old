@@ -21,12 +21,10 @@ type HTTPmanager struct {
 func (h *HTTPmanager) Run() {
 	h.Information = newExchangeInformationOfHTTP()
 	var (
-		reqchan      = h.channels.Request
-		reschan      = h.channels.Response
-		sepIO        = SeparationOfIOReadCloser
-		requests     = h.Information.Request
-		editRequests = h.Information.EditRequest
-		bodyOfStr    string
+		reqchan   = h.channels.Request
+		reschan   = h.channels.Response
+		sepIO     = SeparationOfIOReadCloser
+		bodyOfStr string
 	)
 	for {
 		select {
@@ -35,11 +33,11 @@ func (h *HTTPmanager) Run() {
 				IsEdit: h.channels.IsForward,
 			}
 			httphistory.SetIdentifier(shared.GetSha1(req.URL.String()))
-			go httphistory.MemoryRequest(req, false, requests.SetRequest(req))
+			go httphistory.MemoryRequest(req, false, h.Information.Request.SetRequest(req))
 			if h.channels.IsForward {
 				reqchan.HMgToHsSignal <- req
 				req = <-reqchan.HMgToHsSignal
-				req.ContentLength = int64(len(editRequests.SetRequest(req)))
+				req.ContentLength = int64(len(h.Information.EditRequest.SetRequest(req)))
 			}
 			client := &http.Client{Timeout: time.Duration(10) * time.Second}
 			req.RequestURI = ""
@@ -52,6 +50,9 @@ func (h *HTTPmanager) Run() {
 				if isEdit {
 					go httphistory.MemoryRequest(req, true, bodys[1])
 				}
+			} else {
+				h.Information.Request.DequeueBody()
+				h.Information.Request.DequeueHeader()
 			}
 		}
 	}
