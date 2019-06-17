@@ -1,6 +1,7 @@
 package scanner
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -9,6 +10,7 @@ import (
 	"github.com/WestEast1st/Matchlock/extractor"
 	"github.com/WestEast1st/Matchlock/scanner/attacker"
 	"github.com/WestEast1st/Matchlock/scanner/attacker/payload"
+	"github.com/WestEast1st/Matchlock/shared"
 )
 
 type scanner struct {
@@ -20,6 +22,7 @@ const Inspection = "inspection"
 type getdata struct {
 	Name  string
 	Value string
+	Type  string
 	Count int
 }
 
@@ -40,7 +43,8 @@ func (s *scanner) setParamData(req http.Request, paramAndValues []string) []atta
 	}
 	paramData := []attacker.ParamData{{
 		Name:     strings.Split(paramAndValues[0], "=")[0],
-		Type:     maxTypeName,
+		TypeOf:   maxTypeName,
+		Type:     getdatas[0].Type,
 		DefaultV: getdatas[0].Value,
 	}}
 	if len(paramAndValues) < 2 {
@@ -60,6 +64,17 @@ func (s *scanner) attackRun(reqs []http.Request, ps map[string]map[string][]stri
 	requestBody := extractor.GetStringBody(reqs[0].Body)
 	if len(requestBody) < 1 {
 		return
+	}
+	if shared.CheckRegexp(`^{(\".*\":\"?.*\"?,?)+[^,]}$`, requestBody) {
+		ret := []string{}
+		bbyte := []byte(requestBody)
+		var list interface{}
+		json.Unmarshal(bbyte, &list)
+		hoge := list.(map[string]interface{})
+		for key := range hoge {
+			ret = append(ret, key+"="+hoge[key].(string))
+		}
+		requestBody = strings.Join(ret, "&")
 	}
 	paramdata = s.setParamData(reqs[0], strings.Split(requestBody, "&"))
 	go attacker.Attack(reqs[0], paramdata, ps)
@@ -90,7 +105,7 @@ func (s *scanner) getDatas(httpReq http.Request, paramAndValue string) []getdata
 	ss := strings.Split(paramAndValue, "=")
 	name, db, getdatas :=
 		ss[0], datastore.DB.OpenDatabase(), []getdata{}
-	db.Table("request_data").Select("Name, Value, count(Value) AS count").
+	db.Table("request_data").Select("Name, Value, Type, count(Value) AS count").
 		Joins("LEFT JOIN requests ON requests.identifier = request_data.identifier").
 		Where("host = ? AND path = ? AND method = ? AND name = ?",
 			httpReq.URL.Host, httpReq.URL.Path, httpReq.Method, name).

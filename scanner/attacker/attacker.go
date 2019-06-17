@@ -24,6 +24,13 @@ func Attack(req http.Request, paramdata []ParamData, ps map[string]map[string][]
 	if err != nil {
 		fmt.Println("hoge")
 	}
+	var b string
+	if paramdata[0].Type == "JSON" {
+		b = "{" + strings.Join(bodys, ",") + "}"
+	} else {
+		b = strings.Join(bodys, "&")
+	}
+	fmt.Println(b)
 	var str string
 	str, res.Body = shared.SeparationOfIOReadCloser(res.Body)
 	attack := attacker{
@@ -31,7 +38,7 @@ func Attack(req http.Request, paramdata []ParamData, ps map[string]map[string][]
 		Response:     res,
 		ResponseBody: str,
 		client:       &c,
-		paramtmplate: template.Must(template.New("").Parse(strings.Join(bodys, "&"))),
+		paramtmplate: template.Must(template.New("").Parse(b)),
 	}
 	/*
 		You will lose some speed if you lose goroutines here.

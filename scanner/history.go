@@ -27,16 +27,24 @@ func (r *Request) GetRequest(host string) []http.Request {
 }
 
 func (r *Request) getRequests(host string, requests []Request) []http.Request {
+	var b string
 	u, _ := url.Parse(requests[0].URL)
 	rh, rd := RequestHeader{}, RequestData{}
+	reqdata := rd.GetData(u.Host, u.Path, requests[0].Method)
+	if len(reqdata) > 0 {
+		if reqdata[0].Type == "JSON" {
+			b = "{" + strings.Join(getBodySlice(reqdata), ",") + "}"
+		} else {
+			b = strings.Join(getBodySlice(reqdata), "&")
+		}
+	}
 	tr := []http.Request{{
 		Method: requests[0].Method,
 		Host:   host,
 		URL:    u,
 		Proto:  requests[0].Proto,
 		Header: setHeader(http.Header{}, rh.GetHeader(u.Host, u.Path, requests[0].Method)),
-		Body: extractor.GetIOReadCloser(strings.Join(
-			getBodySlice(rd.GetData(u.Host, u.Path, requests[0].Method)), "&")),
+		Body:   extractor.GetIOReadCloser(b),
 	}}
 	if len(requests) > 1 {
 		return append(tr, r.getRequests(host, requests[1:])...)
@@ -52,7 +60,12 @@ func setHeader(header http.Header, hs []RequestHeader) http.Header {
 }
 
 func getBodySlice(d []RequestData) []string {
-	data := []string{d[0].Name + "=" + d[0].Value}
+	var data []string
+	if d[0].Type == "JSON" {
+		data = []string{"\"" + d[0].Name + "\":\"" + d[0].Value + "\""}
+	} else {
+		data = []string{d[0].Name + "=" + d[0].Value}
+	}
 	if len(d) > 1 {
 		return append(data, getBodySlice(d[1:])...)
 	}
@@ -80,6 +93,7 @@ func (r *RequestHeader) GetHeader(host string, path string, method string) []Req
 type RequestData struct {
 	Name   string
 	Value  string
+	Type   string
 	IsEdit bool
 }
 
@@ -87,7 +101,7 @@ func (r *RequestData) GetData(host string, path string, method string) []Request
 	db := datastore.DB.OpenDatabase()
 	var requestData []RequestData
 	db.Table("request_data").
-		Select("name, value, request_data.is_edit AS is_edit").
+		Select("name, value, type, request_data.is_edit AS is_edit").
 		Joins("LEFT JOIN requests ON requests.identifier = request_data.identifier").
 		Where("host = ? AND path = ? AND method = ?", host, path, method).
 		Group("name").
