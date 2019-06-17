@@ -2,9 +2,9 @@ package proxy
 
 import (
 	"net/http"
-	"regexp"
 
 	"github.com/WestEast1st/Matchlock/channel"
+	"github.com/WestEast1st/Matchlock/shared"
 	"github.com/elazarl/goproxy"
 )
 
@@ -60,12 +60,9 @@ func UpdataWhiteList(domains []string) bool {
 
 func whitelistMatch(host string) bool {
 	for _, d := range whitelist {
-		if check_regexp(d, host) {
+		if shared.CheckRegexp(d, host) {
 			return true
 		}
 	}
 	return false
-}
-func check_regexp(reg, str string) bool {
-	return regexp.MustCompile(reg).Match([]byte(str))
 }

@@ -13,30 +13,8 @@ import (
 	"github.com/WestEast1st/Matchlock/extractor"
 	"github.com/WestEast1st/Matchlock/scanner/attacker/decid"
 	"github.com/WestEast1st/Matchlock/scanner/attacker/payload"
-	"github.com/sergi/go-diff/diffmatchpatch"
+	"github.com/WestEast1st/Matchlock/shared"
 )
-
-type ParamData struct {
-	Name     string
-	Type     string
-	DefaultV string
-}
-
-/*
- Attack はattacker.goの関数を動かす仮の関数
-*/
-
-func setParamData(pdata []ParamData) ([]string, []string, map[string]string) {
-	body, name, defvlue :=
-		[]string{pdata[0].Name + "={{." + pdata[0].Name + "}}"},
-		[]string{pdata[0].Name},
-		map[string]string{pdata[0].Name: pdata[0].DefaultV}
-	if len(pdata) > 1 {
-		bodys, names, defvalues := setParamData(pdata[1:])
-		return append(body, bodys...), append(name, names...), merge(defvlue, defvalues)
-	}
-	return body, name, defvlue
-}
 
 func Attack(req http.Request, paramdata []ParamData, ps map[string]map[string][]string) {
 	bodys, names, defaultVs := setParamData(paramdata)
@@ -52,7 +30,7 @@ func Attack(req http.Request, paramdata []ParamData, ps map[string]map[string][]
 		fmt.Println("hoge")
 	}
 	var str string
-	str, res.Body = SeparationOfIOReadCloser(res.Body)
+	str, res.Body = shared.SeparationOfIOReadCloser(res.Body)
 	attack := attacker{
 		Request:      &req,
 		Response:     res,
@@ -65,16 +43,13 @@ func Attack(req http.Request, paramdata []ParamData, ps map[string]map[string][]
 		If necessary, remove it.
 	*/
 	go func(at attacker) {
-		var c int
 		for div, datas := range ps {
 			for types, data := range datas {
-				c += len(data)
-				p := payload.Payload{
+				go at.SimpleList(names, defaultVs, payload.Payload{
 					Division: div,
 					Type:     types,
 					Data:     data,
-				}
-				go at.SimpleList(names, defaultVs, p)
+				})
 			}
 		}
 	}(attack)
@@ -165,10 +140,4 @@ func (a attacker) decider(resp io.ReadCloser, payloadData payload.Payload, input
 	go decid.Decider(
 		lineDiff(a.ResponseBody, extractor.GetStringBody(resp)), payloadData, *a.Request, input,
 	)
-}
-
-func lineDiff(src1, src2 string) []diffmatchpatch.Diff {
-	dmp := diffmatchpatch.New()
-	a, b, c := dmp.DiffLinesToChars(src1, src2)
-	return dmp.DiffCharsToLines(dmp.DiffMain(a, b, false), c)
 }
