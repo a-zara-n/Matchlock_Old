@@ -13,3 +13,5 @@
 
 # Eliminate SQLite "* .db" for HTTP history.
 *.db
+
+*.pem
