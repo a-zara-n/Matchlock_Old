@@ -1,6 +1,6 @@
 package attacker
 
-import "github.com/WestEast1st/Matchlock/shared"
+import "github.com/a-zara-n/Matchlock/shared"
 
 type ParamData struct {
 	Name     string

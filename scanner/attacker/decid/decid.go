@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/WestEast1st/Matchlock/scanner/attacker/payload"
+	"github.com/a-zara-n/Matchlock/scanner/attacker/payload"
 	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
@@ -53,8 +53,8 @@ func tagstring(text string, data []string, req http.Request, inputstr string) {
 				"	Method" + req.Method,
 				"	URL:" + req.URL.String(),
 			}
-			//fmt.Println("Existence of unescaped tag character:\n")
 			var isOut bool
+			text = strings.Trim(text, " ")
 			for _, str := range strings.Split(html.UnescapeString(inputstr), "&") {
 				if strings.Contains(str, v) {
 					isOut = true
@@ -65,12 +65,13 @@ func tagstring(text string, data []string, req http.Request, inputstr string) {
 				for _, mes := range massage {
 					fmt.Println(mes)
 				}
-				fmt.Println("		- Output :", strings.Trim(text, " "))
+				fmt.Println("		- Output :", text)
 			}
 			break
 		}
 	}
 }
+
 func special(text string, req http.Request, inputstr string) {
 	v := []string{`&lt;&gt;&quot;&apos;&amp;`, `&lt;&gt;&quot;&apos;`}
 
@@ -80,7 +81,6 @@ func special(text string, req http.Request, inputstr string) {
 			"	Method" + req.Method,
 			"	URL:" + req.URL.String(),
 		}
-		//fmt.Println("Special char has not been escaped:\n")
 		var isOut bool
 		text = strings.Trim(text, " ")
 		for _, str := range strings.Split(html.UnescapeString(inputstr), "&") {
@@ -107,9 +107,8 @@ func event(text string, data []string, req http.Request, inputstr string) {
 					"	Method: " + req.Method,
 					"	URL: " + req.URL.String(),
 				}
-				//fmt.Println("Event handler and double quote enabled in tag\n")
-				text = strings.Trim(text, " ")
 				var isOut bool
+				text = strings.Trim(text, " ")
 				for _, str := range strings.Split(html.UnescapeString(inputstr), "&") {
 					if strings.Contains(str, v) && strings.Contains(text, strings.Split(str, "=")[0]) {
 						isOut = true
@@ -138,6 +137,4 @@ func sql(diffs []diffmatchpatch.Diff, data []string, req http.Request, inputstr 
 		count_map[diff.Type]++
 		c++
 	}
-	//fmt.Println(c)
-	//fmt.Println(count_map)
 }

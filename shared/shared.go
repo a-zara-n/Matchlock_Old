@@ -6,7 +6,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/WestEast1st/Matchlock/extractor"
+	"github.com/a-zara-n/Matchlock/extractor"
 )
 
 func Merge(m1, m2 map[string]string) map[string]string {

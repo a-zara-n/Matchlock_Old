@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/WestEast1st/Matchlock/datastore"
-	"github.com/WestEast1st/Matchlock/shared"
+	"github.com/a-zara-n/Matchlock/datastore"
+	"github.com/a-zara-n/Matchlock/shared"
 	"github.com/jinzhu/gorm"
 )
 

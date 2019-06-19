@@ -7,8 +7,8 @@ import (
 	"net/http/cookiejar"
 	"strings"
 
-	"github.com/WestEast1st/Matchlock/scanner/attacker/payload"
-	"github.com/WestEast1st/Matchlock/shared"
+	"github.com/a-zara-n/Matchlock/scanner/attacker/payload"
+	"github.com/a-zara-n/Matchlock/shared"
 )
 
 func Attack(req http.Request, paramdata []ParamData, ps map[string]map[string][]string) {
@@ -30,7 +30,6 @@ func Attack(req http.Request, paramdata []ParamData, ps map[string]map[string][]
 	} else {
 		b = strings.Join(bodys, "&")
 	}
-	fmt.Println(b)
 	var str string
 	str, res.Body = shared.SeparationOfIOReadCloser(res.Body)
 	attack := attacker{

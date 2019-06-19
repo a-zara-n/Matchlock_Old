@@ -3,7 +3,7 @@ package history
 import (
 	"net/http"
 
-	"github.com/WestEast1st/Matchlock/datastore"
+	"github.com/a-zara-n/Matchlock/datastore"
 	"github.com/jinzhu/gorm"
 )
 

@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/WestEast1st/Matchlock/channel"
-	"github.com/WestEast1st/Matchlock/datastore"
-	"github.com/WestEast1st/Matchlock/extractor"
+	"github.com/a-zara-n/Matchlock/channel"
+	"github.com/a-zara-n/Matchlock/datastore"
+	"github.com/a-zara-n/Matchlock/extractor"
 	"github.com/gorilla/websocket"
 	"github.com/labstack/echo"
 )

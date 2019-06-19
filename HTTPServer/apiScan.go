@@ -5,10 +5,10 @@ import (
 	"html/template"
 	"net/http"
 
-	"github.com/WestEast1st/Matchlock/shared"
+	"github.com/a-zara-n/Matchlock/shared"
 
-	"github.com/WestEast1st/Matchlock/datastore"
-	"github.com/WestEast1st/Matchlock/scanner"
+	"github.com/a-zara-n/Matchlock/datastore"
+	"github.com/a-zara-n/Matchlock/scanner"
 	"github.com/labstack/echo"
 )
 

@@ -6,9 +6,9 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/WestEast1st/Matchlock/extractor"
-	"github.com/WestEast1st/Matchlock/scanner/attacker/decid"
-	"github.com/WestEast1st/Matchlock/scanner/attacker/payload"
+	"github.com/a-zara-n/Matchlock/extractor"
+	"github.com/a-zara-n/Matchlock/scanner/attacker/decid"
+	"github.com/a-zara-n/Matchlock/scanner/attacker/payload"
 )
 
 func (a attacker) scanClientRun(submitValues map[string]string, payloadData payload.Payload) {
