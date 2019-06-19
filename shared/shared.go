@@ -53,3 +53,62 @@ func RecursiveExec(slice []string, fun func(slice []string)) int {
 	}
 	return 1
 }
+
+/*
+section\n
+	slice[0] = form query
+	slice[1] = json
+*/
+var (
+	querySectString       = []string{"&", ","}
+	keyandvalueSectString = []string{"=", "\":\""}
+	joinFunc              = map[string]func(data []string, strs []string) string{
+		"":     func(data []string, strs []string) string { return strings.Join(data, strs[0]) },
+		"JSON": func(data []string, strs []string) string { return strings.Join(data, strs[1]) },
+	}
+	splitFunc = map[string]func(rawQuery string, strs []string) []string{
+		"":     func(rawQuery string, strs []string) []string { return strings.Split(rawQuery, strs[0]) },
+		"JSON": func(rawQuery string, strs []string) []string { return strings.Split(rawQuery, strs[1]) },
+	}
+	convParam = map[string]func(rawQuery string) string{
+		"":     func(rawQuery string) string { return rawQuery },
+		"JSON": func(rawQuery string) string { return "\"" + rawQuery + "\"" },
+	}
+	convQuery = map[string]func(rawQuery string) string{
+		"":     func(rawQuery string) string { return rawQuery },
+		"JSON": func(rawQuery string) string { return "{" + rawQuery + "}" },
+	}
+	deconv = map[string]func(decString string) string{
+		"":     func(decString string) string { return decString },
+		"JSON": func(decString string) string { return decString[1 : len(decString)-1] },
+	}
+)
+
+func QueryConverter(typ string, data [][]string) string {
+	var recursion func(data [][]string) []string
+	recursion = func(data [][]string) []string {
+		if len(data) > 1 {
+			return append(
+				[]string{convParam[typ](joinFunc[typ](data[0], keyandvalueSectString))},
+				recursion(data[1:])...,
+			)
+		}
+		return []string{convParam[typ](joinFunc[typ](data[0], keyandvalueSectString))}
+	}
+	return convQuery[typ](joinFunc[typ](recursion(data), querySectString))
+}
+
+func QueryDeconverter(typ string, rawQuery string) [][]string {
+	var recursion func(data []string) [][]string
+	params := splitFunc[typ](deconv[typ](rawQuery), querySectString)
+	recursion = func(data []string) [][]string {
+		if len(data) > 1 {
+			return append(
+				[][]string{splitFunc[typ](deconv[typ](data[0]), keyandvalueSectString)},
+				recursion(data[1:])...,
+			)
+		}
+		return [][]string{splitFunc[typ](deconv[typ](data[0]), keyandvalueSectString)}
+	}
+	return recursion(params)
+}

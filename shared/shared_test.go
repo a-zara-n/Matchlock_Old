@@ -94,3 +94,29 @@ func Test_SeparationOfIOReadCloser(t *testing.T) {
 		t.Error("Not Separation of io.ReadCloser")
 	}
 }
+
+func Test_QueryConverter(t *testing.T) {
+	var testSS = [][]string{{"hoge", "fuga"}, {"input", "null"}, {"output", "hogera"}, {"search", "qu"}}
+	//RowQuery
+	if QueryConverter("", testSS) == `{"hoge":"fuga","input":"null","output":"hogera","search":"qu"}` {
+		t.Error("The correct JSON has not been returned")
+	}
+	//JSON
+	if QueryConverter("JSON", testSS) != `{"hoge":"fuga","input":"null","output":"hogera","search":"qu"}` {
+		t.Error("The correct JSON has not been returned")
+	}
+}
+
+func Test_QueryDeconverter(t *testing.T) {
+	var testSJson = `{"hoge":"fuga","input":"null","output":"hogera","search":"qu"}`
+	var testSRawQuery = `hoge=fuga&input=null&output=hogera&search=qu`
+	var testSS = [][]string{{"hoge", "fuga"}, {"input", "null"}, {"output", "hogera"}, {"search", "qu"}}
+	//RowQuery
+	if !reflect.DeepEqual(QueryDeconverter("", testSRawQuery), testSS) {
+		t.Error("Unmatched return")
+	}
+	//JSON
+	if !reflect.DeepEqual(QueryDeconverter("JSON", testSJson), testSS) {
+		t.Error("Unmatched return")
+	}
+}

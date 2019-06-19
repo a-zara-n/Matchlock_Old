@@ -1,7 +1,6 @@
 package scanner
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -26,14 +25,14 @@ type getdata struct {
 	Count int
 }
 
-func (s *scanner) setParamData(req http.Request, paramAndValues []string) []attacker.ParamData {
+func (s *scanner) setParamData(req http.Request, paramAndValues [][]string) []attacker.ParamData {
 	var (
 		maxTypeName  string
 		maxTypeCount int
 		t            string //type
 		voting       = map[string]int{"STRING": 0, "INT": 0, "BOOL": 0}
 	)
-	getdatas := s.getDatas(req, paramAndValues[0])
+	getdatas := s.getDatas(req, strings.Join(paramAndValues[0], "="))
 	for _, data := range getdatas {
 		t = getParamType(data.Value)
 		voting[t] += data.Count
@@ -42,7 +41,7 @@ func (s *scanner) setParamData(req http.Request, paramAndValues []string) []atta
 		}
 	}
 	paramData := []attacker.ParamData{{
-		Name:     strings.Split(paramAndValues[0], "=")[0],
+		Name:     paramAndValues[0][0],
 		TypeOf:   maxTypeName,
 		Type:     getdatas[0].Type,
 		DefaultV: getdatas[0].Value,
@@ -65,18 +64,11 @@ func (s *scanner) attackRun(reqs []http.Request, ps map[string]map[string][]stri
 	if len(requestBody) < 1 {
 		return
 	}
+	var typ string
 	if shared.CheckRegexp(`^{(\".*\":\"?.*\"?,?)+[^,]}$`, requestBody) {
-		ret := []string{}
-		bbyte := []byte(requestBody)
-		var list interface{}
-		json.Unmarshal(bbyte, &list)
-		hoge := list.(map[string]interface{})
-		for key := range hoge {
-			ret = append(ret, key+"="+hoge[key].(string))
-		}
-		requestBody = strings.Join(ret, "&")
+		typ = "JSON"
 	}
-	paramdata = s.setParamData(reqs[0], strings.Split(requestBody, "&"))
+	paramdata = s.setParamData(reqs[0], shared.QueryDeconverter(typ, requestBody))
 	go attacker.Attack(reqs[0], paramdata, ps)
 }
 

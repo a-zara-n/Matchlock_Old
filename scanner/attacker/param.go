@@ -13,13 +13,9 @@ type ParamData struct {
  Attack はattacker.goの関数を動かす仮の関数
 */
 
-func setParamData(pdata []ParamData) ([]string, []string, map[string]string) {
-	var body []string
-	if pdata[0].Type == "JSON" {
-		body = []string{"\"" + pdata[0].Name + "\":\"{{." + pdata[0].Name + "}}\""}
-	} else {
-		body = []string{pdata[0].Name + "={{." + pdata[0].Name + "}}"}
-	}
+func setParamData(pdata []ParamData) ([][]string, []string, map[string]string) {
+	var body [][]string
+	body = [][]string{{pdata[0].Name, "{{." + pdata[0].Name + "}}"}}
 	name, defvlue :=
 		[]string{pdata[0].Name},
 		map[string]string{pdata[0].Name: pdata[0].DefaultV}

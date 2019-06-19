@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/WestEast1st/Matchlock/channel"
-	"github.com/WestEast1st/Matchlock/extractor"
-	"github.com/WestEast1st/Matchlock/history"
-	"github.com/WestEast1st/Matchlock/shared"
+	"github.com/a-zara-n/Matchlock/channel"
+	"github.com/a-zara-n/Matchlock/extractor"
+	"github.com/a-zara-n/Matchlock/history"
+	"github.com/a-zara-n/Matchlock/shared"
 )
 
 //HTTPmanager is controls HTTP acquired by proxy etc.

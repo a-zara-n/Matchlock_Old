@@ -3,10 +3,10 @@ package scanner
 import (
 	"net/http"
 	"net/url"
-	"strings"
 
 	"github.com/a-zara-n/Matchlock/datastore"
 	"github.com/a-zara-n/Matchlock/extractor"
+	"github.com/a-zara-n/Matchlock/shared"
 )
 
 type Request struct {
@@ -32,11 +32,7 @@ func (r *Request) getRequests(host string, requests []Request) []http.Request {
 	rh, rd := RequestHeader{}, RequestData{}
 	reqdata := rd.GetData(u.Host, u.Path, requests[0].Method)
 	if len(reqdata) > 0 {
-		if reqdata[0].Type == "JSON" {
-			b = "{" + strings.Join(getBodySlice(reqdata), ",") + "}"
-		} else {
-			b = strings.Join(getBodySlice(reqdata), "&")
-		}
+		b = shared.QueryConverter(reqdata[0].Type, getBodySlice(reqdata))
 	}
 	tr := []http.Request{{
 		Method: requests[0].Method,
@@ -59,13 +55,8 @@ func setHeader(header http.Header, hs []RequestHeader) http.Header {
 	return header
 }
 
-func getBodySlice(d []RequestData) []string {
-	var data []string
-	if d[0].Type == "JSON" {
-		data = []string{"\"" + d[0].Name + "\":\"" + d[0].Value + "\""}
-	} else {
-		data = []string{d[0].Name + "=" + d[0].Value}
-	}
+func getBodySlice(d []RequestData) [][]string {
+	data := [][]string{{d[0].Name, d[0].Value}}
 	if len(d) > 1 {
 		return append(data, getBodySlice(d[1:])...)
 	}

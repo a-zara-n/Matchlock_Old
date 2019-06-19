@@ -5,7 +5,6 @@ import (
 	"html/template"
 	"net/http"
 	"net/http/cookiejar"
-	"strings"
 
 	"github.com/a-zara-n/Matchlock/scanner/attacker/payload"
 	"github.com/a-zara-n/Matchlock/shared"
@@ -24,12 +23,7 @@ func Attack(req http.Request, paramdata []ParamData, ps map[string]map[string][]
 	if err != nil {
 		fmt.Println("hoge")
 	}
-	var b string
-	if paramdata[0].Type == "JSON" {
-		b = "{" + strings.Join(bodys, ",") + "}"
-	} else {
-		b = strings.Join(bodys, "&")
-	}
+	b := shared.QueryConverter(paramdata[0].Type, bodys)
 	var str string
 	str, res.Body = shared.SeparationOfIOReadCloser(res.Body)
 	attack := attacker{

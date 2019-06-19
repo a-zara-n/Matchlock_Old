@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/WestEast1st/Matchlock/history"
+	"github.com/a-zara-n/Matchlock/history"
 )
 
 type exchangeInformationOfHTTP struct {

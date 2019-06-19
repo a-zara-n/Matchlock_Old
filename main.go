@@ -7,12 +7,12 @@ import (
 	"os/signal"
 	"sort"
 
-	hs "github.com/WestEast1st/Matchlock/HTTPServer"
-	"github.com/WestEast1st/Matchlock/history"
+	hs "github.com/a-zara-n/Matchlock/HTTPServer"
+	"github.com/a-zara-n/Matchlock/history"
 
-	"github.com/WestEast1st/Matchlock/channel"
-	"github.com/WestEast1st/Matchlock/datastore"
-	"github.com/WestEast1st/Matchlock/proxy"
+	"github.com/a-zara-n/Matchlock/channel"
+	"github.com/a-zara-n/Matchlock/datastore"
+	"github.com/a-zara-n/Matchlock/proxy"
 	cli "github.com/urfave/cli"
 )
 
@@ -21,7 +21,7 @@ var proxyPort = "8888"
 var title = `
    __  ___     __      __   __         __     ====
   /  |/  /__ _/ /_____/ /  / /__  ____/ /__  ====   Matchlock
- / /|_/ / _ '/ __/ __/ _ \/ / _ \/ __/  '_/ ====	〔 https://github.com/WestEast1st/Matchlock 〕
+ / /|_/ / _ '/ __/ __/ _ \/ / _ \/ __/  '_/ ====	〔 https://github.com/a-zara-n/Matchlock 〕
 /_/  /_/\_,_/\__/\__/_//_/_/\___/\__/_/\_\ ====   
 =============================================
 `
