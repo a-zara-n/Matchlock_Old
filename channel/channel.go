@@ -1,5 +1,9 @@
 package channel
 
+/*
+channel
+このチャンネルパッケージはこのこのツールで利用される基幹チャンネルをまとめるて管理するためのチャンネルです。
+*/
 import (
 	"net/http"
 	"os"

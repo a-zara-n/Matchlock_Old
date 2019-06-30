@@ -7,37 +7,45 @@ import (
 	"strings"
 )
 
+//GetRequestByString はメッセージ(string)からhttp.requestを生成するための関数です。
 func GetRequestByString(msg string, req *http.Request) *http.Request {
-	editReq := strings.Split(msg, "\n")
-	req.Header = setHTTPHeader(editReq[1:])
-
-	startLine := strings.Split(editReq[0], " ")
-	pathAndQuery := strings.Split(startLine[1], "?")
-	req.URL.Path, req.Method, req.Proto =
-		pathAndQuery[0], startLine[0], startLine[2]
-	if len(pathAndQuery) > 1 {
-		req.URL.ForceQuery = true
-		req.URL.RawQuery = pathAndQuery[1]
+	var (
+		ers   = strings.Split(msg, "\n")     //editedRequestString
+		sline = strings.Split(ers[0], " ")   //startLine
+		pAndQ = strings.Split(sline[1], "?") //pathAndQuery
+		bstr  = ers[len(ers)-1]              //String by body
+		host  = req.Host
+	)
+	req.Header = setHTTPHeader(ers[1:])
+	if s := req.Header.Get("Host"); s != "" {
+		host = s
+	}
+	if len(pAndQ) > 1 {
+		req.URL.ForceQuery, req.URL.RawQuery =
+			true,
+			pAndQ[1]
 	} else {
 		req.URL.ForceQuery = false
 	}
 
-	bodyStr := editReq[len(editReq)-1]
-	req.ContentLength, req.Body =
-		int64(len(bodyStr)), GetIOReadCloser(bodyStr)
+	req.URL.Host, req.URL.Path, req.Method,
+		req.Proto, req.ContentLength, req.Body =
+		host,
+		pAndQ[0], //path
+		sline[0], //Method
+		sline[2], //Protocol
+		int64(len(bstr)), //ContentLength
+		GetIOReadCloser(bstr) //Body
 
-	host := req.Host
-	if s := req.Header.Get("Host"); s != "" {
-		host = s
-	}
-	req.URL.Host = host
 	return req
 }
 
+//GetIOReadCloser 文字列をio.ReadCloserにする抽象化関数
 func GetIOReadCloser(b string) io.ReadCloser {
 	return ioutil.NopCloser(strings.NewReader(b))
 }
 
+//setHTTPHeader は文字列のhttpheaderをhttp.headerと同じ方に変更する関数です
 func setHTTPHeader(h []string) http.Header {
 	head := http.Header{}
 	for _, v := range h {
