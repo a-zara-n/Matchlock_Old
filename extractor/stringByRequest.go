@@ -8,6 +8,7 @@ import (
 	"strings"
 )
 
+//GetStringByRequest はhttp.Requestから文字列リクエストを作成する
 func GetStringByRequest(r *http.Request) string {
 	return strings.Join([]string{
 		getStartLine(r),
@@ -17,12 +18,14 @@ func GetStringByRequest(r *http.Request) string {
 	}, "\n")
 }
 
+//GetStringBody はio.ReadCloserを文字列に変換する
 func GetStringBody(b io.ReadCloser) string {
 	bufbody := new(bytes.Buffer)
 	bufbody.ReadFrom(b)
 	return bufbody.String()
 }
 
+//GetHeader はhttp.Headerをstring型の配列を返す
 func GetHeader(h http.Header) []string {
 	headerKey, headerSlice := []string{}, []string{}
 	for k := range h {

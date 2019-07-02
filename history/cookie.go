@@ -18,12 +18,14 @@ type Cookie struct {
 	SameSite string
 }
 
+//SetCookie はDBにcookieを挿入します
 func (c Cookie) SetCookie(name string, value string) {
 	c.Name = name
 	c.Value = value
 	datastore.DB.Insert(c)
 }
 
+//GetCookie はcookieを取得できます
 func (c Cookie) GetCookie(domain string, path string) []Cookie {
 	cdb := datastore.DB.OpenDatabase()
 	var cookies []Cookie

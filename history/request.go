@@ -10,6 +10,7 @@ import (
 	"github.com/jinzhu/gorm"
 )
 
+//Request は
 type Request struct {
 	gorm.Model
 	Identifier string
@@ -61,23 +62,27 @@ type RequestData struct {
 }
 
 func (r *Request) SetData(bstr string, length int64, enctype []string) {
+	var (
+		innsertData func(params []string)
+		typestr     string
+		list        interface{}
+	)
 	if bstr == "" {
 		return
 	}
-	var typestr string
 	if shared.CheckRegexp(`^{(\".*\":\"?.*\"?,?)+[^,]}$`, bstr) {
+		var (
+			ret   = []string{}
+			bbyte = []byte(bstr)
+		)
 		typestr = "JSON"
-		ret := []string{}
-		bbyte := []byte(bstr)
-		var list interface{}
+		data := list.(map[string]interface{})
 		json.Unmarshal(bbyte, &list)
-		hoge := list.(map[string]interface{})
-		for key := range hoge {
-			ret = append(ret, key+"="+hoge[key].(string))
+		for key := range data {
+			ret = append(ret, key+"="+data[key].(string))
 		}
 		bstr = strings.Join(ret, "&")
 	}
-	var innsertData func(params []string)
 	innsertData = func(params []string) {
 		shared.RecursiveExec(params, innsertData)
 		param := strings.Split(params[0], "=")
