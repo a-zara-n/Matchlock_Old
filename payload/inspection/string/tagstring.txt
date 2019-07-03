@@ -1,6 +1,0 @@
-<s>hogehoge</s>
-<img src="/" onerror="console.log();"/>
-<img src=/ onerror=console.log(); />
-<a href="javascript:console.log();">hogehogera</a>
-<a href=javascript:console.log(); >hogehogera</a>
-<div onload="" >hogehogera</div>

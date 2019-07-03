@@ -1,7 +1,0 @@
-id
-id | grep ""
-&& true 
-true && id
-|| false
-false || id
-`id`
