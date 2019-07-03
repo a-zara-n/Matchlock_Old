@@ -1,10 +1,9 @@
-package apiusecase
+package api
 
 import (
 	"net/http"
 
-	"github.com/a-zara-n/MatchlockDDD/Matchlock/src/domain/entity"
-
+	"github.com/a-zara-n/Matchlock/src/domain/entity"
 	"github.com/labstack/echo"
 )
 

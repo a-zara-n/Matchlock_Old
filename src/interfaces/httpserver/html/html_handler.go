@@ -1,22 +1,16 @@
 package htmlhandler
 
 import (
-	"context"
-	"net/http"
+	"github.com/a-zara-n/Matchlock/src/application/usecase/html"
 )
 
 type HTMLHandler interface {
-	Warmup(ctx context.Context, w http.ResponseWriter, r *http.Request) error
 }
 
 type htmlHandler struct {
-	htmlHandler htmlusecase.HTMLUseCase
+	u html.HTMLUseCase
 }
 
-func NewWarmupHandler(h htmlusecase.HTMLUseCase) HTMLHandler {
+func NewWarmupHandler(h html.HTMLUseCase) HTMLHandler {
 	return &htmlHandler{h}
-}
-
-func (i *IndexHandler) Warmup(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	// some code
 }

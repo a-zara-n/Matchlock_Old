@@ -1,4 +1,4 @@
-package htmlusecase
+package html
 
 import (
 	"net/http"
