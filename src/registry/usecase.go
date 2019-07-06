@@ -1,12 +1,13 @@
 package registry
 
 import (
+	"github.com/a-zara-n/Matchlock/src/application"
 	"github.com/a-zara-n/Matchlock/src/application/usecase"
 	"github.com/a-zara-n/Matchlock/src/domain/entity"
 )
 
 type Usecase interface {
-	NewLogic() usecase.ProxyLogic
+	NewLogic(white *entity.WhiteList, c *entity.Channel) application.ProxyLogic
 	NewHTMLUseCase() usecase.HTMLUseCase
 	NewAPIUsecase() *usecase.APIUsecase
 	NewCommandUsecase() usecase.CommandUsecase
@@ -14,8 +15,8 @@ type Usecase interface {
 }
 
 //NewLogic はusecase.ProxyLogicを取得
-func NewLogic(white *entity.WhiteList) usecase.ProxyLogic {
-	return usecase.NewLogic(white)
+func NewLogic(white *entity.WhiteList, c *entity.Channel) application.ProxyLogic {
+	return application.NewLogic(white, c)
 }
 
 //NewHTMLUseCase はHTMLのレンダリングを行う

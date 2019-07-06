@@ -1,6 +1,7 @@
 package registry
 
 import (
+	"github.com/a-zara-n/Matchlock/src/application"
 	"github.com/a-zara-n/Matchlock/src/application/usecase"
 	"github.com/a-zara-n/Matchlock/src/domain/entity"
 	"github.com/a-zara-n/Matchlock/src/interfaces/command"
@@ -10,14 +11,14 @@ import (
 
 //Interface はinterfase層で必要なものをまとめています
 type Interface interface {
-	NewProxy(usecase usecase.ProxyLogic) proxy.Proxy
+	NewProxy(usecase application.ProxyLogic) proxy.Proxy
 	NewHTTPServer(c *entity.Channel, h usecase.HTMLUseCase, api *usecase.APIUsecase) httpserver.HttpServer
 	NewCommand() command.Command
 }
 
 //NewProxy はproxy.Proxyを取得
-func NewProxy(c *entity.Channel, usecase usecase.ProxyLogic) proxy.Proxy {
-	return proxy.NewProxy(c, usecase)
+func NewProxy(c *entity.Channel, application application.ProxyLogic) proxy.Proxy {
+	return proxy.NewProxy(c, application)
 }
 
 //NewHTTPServer はサーバー起動に必要なhttpServerを取得します

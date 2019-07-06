@@ -3,7 +3,9 @@ package proxy
 import (
 	"net/http"
 
-	"github.com/a-zara-n/Matchlock/src/application/usecase"
+	"github.com/a-zara-n/Matchlock/src/application"
+	"github.com/a-zara-n/Matchlock/src/domain/entity"
+
 	"github.com/elazarl/goproxy"
 )
 
@@ -12,18 +14,18 @@ type Proxy interface {
 	Run()
 }
 type proxy struct {
-	proxy   *goproxy.ProxyHttpServer
-	usecase usecase.ProxyLogic
+	proxy       *goproxy.ProxyHttpServer
+	application application.ProxyLogic
 }
 
 //NewProxy は新規でProxtの設定を提供します
-func NewProxy(usecase usecase.ProxyLogic) Proxy {
-	return &proxy{usecase: usecase}
+func NewProxy(c *entity.Channel, application application.ProxyLogic) Proxy {
+	return &proxy{application: application}
 }
 
 func (p *proxy) Run() {
 	p.proxy = goproxy.NewProxyHttpServer()
 	p.proxy.Verbose = false
-	p.proxy.OnRequest().DoFunc(p.usecase.MatchlockLogic)
+	p.proxy.OnRequest().DoFunc(p.application.MatchlockLogic)
 	http.ListenAndServe(":10080", p.proxy)
 }

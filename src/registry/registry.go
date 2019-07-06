@@ -23,7 +23,7 @@ func Run() {
 	whitelist := NewWhiteList()
 	channel := NewChannel()
 	//UseCase
-	proxylogic := NewLogic(whitelist)
+	proxylogic := NewLogic(whitelist, channel)
 	html := NewHTMLUseCase()
 	apis := NewAPIUsecase()
 	ws := NewWebSocketUsecase()
