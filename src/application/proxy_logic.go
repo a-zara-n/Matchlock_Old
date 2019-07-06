@@ -1,7 +1,6 @@
-package usecase
+package application
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/a-zara-n/Matchlock/src/domain/entity"
@@ -15,17 +14,17 @@ type ProxyLogic interface {
 
 type proxylogic struct {
 	WhiteList *entity.WhiteList
+	channel   *entity.Channel
 }
 
 //NewLogic はProxyを利用する際にMatchlock側で定義するLogicをさしています
-func NewLogic(white *entity.WhiteList) ProxyLogic {
-	return &proxylogic{white}
+func NewLogic(white *entity.WhiteList, channel *entity.Channel) ProxyLogic {
+	return &proxylogic{WhiteList: white, channel: channel}
 }
 
 func (l *proxylogic) MatchlockLogic(r *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
 	if l.WhiteList.Check(r.Host) {
 		return nil, nil
 	}
-	fmt.Println(r.URL)
 	return r, nil
 }
