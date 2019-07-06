@@ -1,8 +1,12 @@
 package registry
 
 import (
+	"os"
+	"os/signal"
+
 	"github.com/a-zara-n/Matchlock/src/application/usecase"
 	"github.com/a-zara-n/Matchlock/src/domain/entity"
+	"github.com/a-zara-n/Matchlock/src/interfaces/httpserver"
 	"github.com/a-zara-n/Matchlock/src/interfaces/proxy"
 )
 
@@ -13,41 +17,38 @@ type Registry interface {
 	NewWhiteList() *entity.WhiteList
 	//usecase
 	NewLogic() usecase.ProxyLogic
+	NewHTMLUseCase() usecase.HTMLUseCase
 	//infrastructure
 	//interfase
 	NewProxy(usecase usecase.ProxyLogic) proxy.Proxy
+	NewHTTPServer(c *entity.Channel, h usecase.HTMLUseCase) httpserver.HttpServer
 	//総合的なランディング
 	Run()
-}
-
-//NewChannel はentity.Channelを取得
-func NewChannel() *entity.Channel {
-	return entity.NewMatchChannel()
-}
-
-//NewWhiteList はentity.WhiteListを取得
-func NewWhiteList() *entity.WhiteList {
-	return &entity.WhiteList{}
-}
-
-//NewProxy はproxy.Proxyを取得
-func NewProxy(usecase usecase.ProxyLogic) proxy.Proxy {
-	return proxy.NewProxy(usecase)
-}
-
-//NewLogic はusecase.ProxyLogicを取得
-func NewLogic(white *entity.WhiteList) usecase.ProxyLogic {
-	return usecase.NewLogic(white)
 }
 
 //Run はサーバー関連の起動をする
 func Run() {
 	//Entity
 	whitelist := NewWhiteList()
+	channel := NewChannel()
 	//UseCase
 	proxylogic := NewLogic(whitelist)
+	html := NewHTMLUseCase()
 	//Interface
-	p := NewProxy(proxylogic)
+	proxy := NewProxy(proxylogic)
+	http := NewHTTPServer(channel, html)
 	//Runding
-	p.Run()
+	go proxy.Run()
+	go http.Run()
+	sigClose(channel)
+}
+
+// ctrl + c用の
+func sigClose(m *entity.Channel) {
+	// シグナル用のチャネル定義
+	quit := make(chan os.Signal)
+	// 受け取るシグナルを設定
+	signal.Notify(quit, os.Interrupt)
+	//<-m.ExitSignal
+	<-quit // ここでシグナルを受け取るまで以降の処理はされない
 }
