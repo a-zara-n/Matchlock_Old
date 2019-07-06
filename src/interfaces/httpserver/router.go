@@ -1,8 +1,11 @@
 package httpserver
 
-import "github.com/labstack/echo"
+import (
+	"github.com/labstack/echo"
+)
 
 //router はecho.Echoを排出します
-func router(e *echo.Echo) *echo.Echo {
-	return nil
+func (h *httpServer) router(e *echo.Echo) *echo.Echo {
+	e.GET("/", h.Index)
+	return e
 }
