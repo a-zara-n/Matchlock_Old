@@ -6,6 +6,7 @@ import (
 	"os"
 	"sort"
 
+	"github.com/a-zara-n/Matchlock/src/registry"
 	"github.com/urfave/cli"
 )
 
@@ -30,6 +31,7 @@ func main() {
 	sort.Sort(cli.FlagsByName(app.Flags))
 	app.Action = func(c *cli.Context) {
 		fmt.Println(title)
+		registry.Run()
 	}
 	// アプリケーションの起動
 	err := app.Run(os.Args)
