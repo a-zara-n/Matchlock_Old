@@ -4,24 +4,15 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/a-zara-n/Matchlock/src/application/usecase"
 	"github.com/a-zara-n/Matchlock/src/domain/entity"
-	"github.com/a-zara-n/Matchlock/src/interfaces/httpserver"
-	"github.com/a-zara-n/Matchlock/src/interfaces/proxy"
 )
 
 //Registry はNewで生成されるものを定義しています
 type Registry interface {
-	//entity
-	NewChannel() *entity.Channel
-	NewWhiteList() *entity.WhiteList
-	//usecase
-	NewLogic() usecase.ProxyLogic
-	NewHTMLUseCase() usecase.HTMLUseCase
-	//infrastructure
-	//interfase
-	NewProxy(usecase usecase.ProxyLogic) proxy.Proxy
-	NewHTTPServer(c *entity.Channel, h usecase.HTMLUseCase) httpserver.HttpServer
+	Config
+	Entity
+	Usecase
+	Interface
 	//総合的なランディング
 	Run()
 }
@@ -34,12 +25,16 @@ func Run() {
 	//UseCase
 	proxylogic := NewLogic(whitelist)
 	html := NewHTMLUseCase()
+	apis := NewAPIUsecase()
+	ws := NewWebSocketUsecase()
 	//Interface
-	proxy := NewProxy(proxylogic)
-	http := NewHTTPServer(channel, html)
+	proxy := NewProxy(channel, proxylogic)
+	http := NewHTTPServer(channel, html, apis, ws)
+	command := NewCommand()
 	//Runding
 	go proxy.Run()
 	go http.Run()
+	command.Run()
 	sigClose(channel)
 }
 
