@@ -24,7 +24,9 @@ func NewLogic(white *entity.WhiteList, channel *entity.Channel) ProxyLogic {
 
 func (l *proxylogic) MatchlockLogic(r *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
 	if l.WhiteList.Check(r.Host) {
-		return nil, nil
+		l.channel.Request.ProxToHMgSignal <- r
+		resp := <-l.channel.Response.ProxToHMgSignal
+		return nil, resp
 	}
 	return r, nil
 }
