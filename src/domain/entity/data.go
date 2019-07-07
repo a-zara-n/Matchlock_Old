@@ -1,7 +1,10 @@
 package entity
 
 import (
+	"bytes"
 	"encoding/json"
+	"io"
+	"io/ioutil"
 	"log"
 	"regexp"
 	"sort"
@@ -41,6 +44,15 @@ func (d *Data) FetchData() string {
 		retdata = strings.Join(tmp, "&")
 	}
 	return retdata
+}
+
+//SetDataByHTTPBody はDataエンティティにDataを設定するためのmethod
+func (d *Data) SetDataByHTTPBody(body io.ReadCloser) io.ReadCloser {
+	bufbody := new(bytes.Buffer)
+	bufbody.ReadFrom(body)
+	data := bufbody.String()
+	go d.SetData(data)
+	return ioutil.NopCloser(strings.NewReader(data))
 }
 
 //SetData はDataエンティティにDataを設定するためのmethod

@@ -7,6 +7,11 @@ type HTTPHeader struct {
 	http.Header
 }
 
+//SetHTTPHeader はHTTPheaderを設定することが可能です
+func (h *HTTPHeader) SetHTTPHeader(header http.Header) {
+	h.Header = header
+}
+
 //GetKeys はHeaderのnamesを取得します
 func (h *HTTPHeader) GetKeys() []string {
 	keys := []string{}
