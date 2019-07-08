@@ -5,7 +5,7 @@ import (
 	"github.com/a-zara-n/Matchlock/src/domain/entity"
 	"github.com/a-zara-n/Matchlock/src/interfaces/httpserver/apihandler"
 	"github.com/a-zara-n/Matchlock/src/interfaces/httpserver/htmlhandler"
-	"github.com/a-zara-n/Matchlock/src/interfaces/httpserver/websocket"
+	"github.com/a-zara-n/Matchlock/src/interfaces/httpserver/websockethandler"
 	"github.com/labstack/echo"
 )
 
@@ -15,7 +15,7 @@ type HttpServer interface {
 type httpServer struct {
 	htmlhandler.HTMLHandler
 	apihandler.API
-	websocket.WebSocketHandler
+	websockethandler.WebSocketHandler
 }
 
 //NewHTTPServer は
@@ -23,7 +23,7 @@ func NewHTTPServer(c *entity.Channel, h usecase.HTMLUseCase, api *usecase.APIUse
 	return &httpServer{
 		htmlhandler.NewWarmupHandler(h),
 		apihandler.SetHandler(c, api),
-		websocket.NewWebSocketHandler(c, ws),
+		websockethandler.NewWebSocketHandler(c, ws),
 	}
 }
 

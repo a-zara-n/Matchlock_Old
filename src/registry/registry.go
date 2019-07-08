@@ -19,18 +19,20 @@ type Registry interface {
 
 //Run はサーバー関連の起動をする
 func Run() {
-	//Entity
-	whitelist := NewWhiteList()
-	channel := NewChannel()
-	//UseCase
-	proxylogic := NewLogic(whitelist, channel)
-	html := NewHTMLUseCase()
-	apis := NewAPIUsecase()
-	ws := NewWebSocketUsecase()
-	//Interface
-	proxy := NewProxy(channel, proxylogic)
-	http := NewHTTPServer(channel, html, apis, ws)
-	command := NewCommand()
+	var (
+		//Entity
+		whitelist = NewWhiteList()
+		channel   = NewChannel()
+		//UseCase
+		proxylogic = NewLogic(whitelist, channel)
+		html       = NewHTMLUseCase()
+		apis       = NewAPIUsecase()
+		ws         = NewWebSocketUsecase()
+		//Interface
+		proxy   = NewProxy(channel, proxylogic)
+		http    = NewHTTPServer(channel, html, apis, ws)
+		command = NewCommand()
+	)
 	//Runding
 	go proxy.Run()
 	go http.Run()
