@@ -23,10 +23,16 @@ func (d *Data) GetKeys() []string {
 	return d.Keys
 }
 
-//SetValue は指定した値を設定します
-func (d *Data) SetValue(key, value string) {
+//AddData は指定した値を設定します
+func (d *Data) AddData(key string, value interface{}) {
 	d.Data[key] = value
 	d.Keys = append(d.Keys, key)
+}
+
+//RemoveData は指定した値を設定します
+func (d *Data) RemoveData(key string) {
+	delete(d.Data, key)
+	d.Keys = getKeys(d.Data)
 }
 
 //FetchData はTypeに合った形式でデータを出力します
@@ -41,6 +47,7 @@ func (d *Data) FetchData() string {
 		for name, value := range d.Data {
 			tmp = append(tmp, name+"="+value.(string))
 		}
+		sort.Strings(tmp)
 		retdata = strings.Join(tmp, "&")
 	}
 	return retdata
@@ -51,7 +58,7 @@ func (d *Data) SetDataByHTTPBody(body io.ReadCloser) io.ReadCloser {
 	bufbody := new(bytes.Buffer)
 	bufbody.ReadFrom(body)
 	data := bufbody.String()
-	go d.SetData(data)
+	d.SetData(data)
 	return ioutil.NopCloser(strings.NewReader(data))
 }
 
@@ -74,14 +81,15 @@ func checkDataType(rawdata string) (map[string]interface{}, string) {
 func parseJSON(rawdata string) map[string]interface{} {
 	var data map[string]interface{}
 	if err := json.Unmarshal([]byte(rawdata), &data); err != nil {
-		log.Fatal("not JSON schema")
+		log.Println("not JSON schema")
 		return map[string]interface{}{}
 	}
+
 	return data
 }
 
 func parseFORM(rawdata string) map[string]interface{} {
-	var retdata map[string]interface{}
+	var retdata = map[string]interface{}{}
 	splitdata := strings.Split(rawdata, "&")
 	for _, data := range splitdata {
 		v := strings.Split(data, "=")
