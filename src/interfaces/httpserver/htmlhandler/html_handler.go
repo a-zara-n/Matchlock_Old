@@ -10,10 +10,10 @@ type HTMLHandler interface {
 }
 
 type htmlHandler struct {
-	usecase.HTMLUseCase
+	usecase.HTMLUsecase
 }
 
-func NewWarmupHandler(h usecase.HTMLUseCase) HTMLHandler {
+func NewHTMLHandler(h usecase.HTMLUsecase) HTMLHandler {
 	return &htmlHandler{h}
 }
 
