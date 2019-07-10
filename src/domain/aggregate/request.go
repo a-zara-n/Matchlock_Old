@@ -15,7 +15,11 @@ type Request struct {
 
 //NewHTTPRequestByRequest はhttp.Requestを利用しaggregate.Requestを取得できます
 func NewHTTPRequestByRequest(req *http.Request) *Request {
-	request := &Request{}
+	request := &Request{
+		Info:   &entity.RequestInfo{},
+		Header: &entity.HTTPHeader{},
+		Data:   &entity.Data{},
+	}
 	request.SetHTTPRequestByRequest(req)
 	return request
 }
@@ -24,7 +28,11 @@ func NewHTTPRequestByRequest(req *http.Request) *Request {
 func (r *Request) SetHTTPRequestByRequest(req *http.Request) {
 	r.Info.SetRequestINFO(req)
 	r.Header.SetHTTPHeader(req.Header)
-	req.Body = r.Data.SetDataByHTTPBody(req.Body)
+	if req.Method == "POST" {
+		req.Body = r.Data.SetDataByHTTPBody(req.Body)
+		return
+	}
+	r.Data.SetData(req.URL.RawQuery)
 }
 
 //SetHTTPRequestByString はstringを元に設定をします

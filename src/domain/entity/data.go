@@ -58,7 +58,9 @@ func (d *Data) SetDataByHTTPBody(body io.ReadCloser) io.ReadCloser {
 	bufbody := new(bytes.Buffer)
 	bufbody.ReadFrom(body)
 	data := bufbody.String()
-	d.SetData(data)
+	if data != "" {
+		d.SetData(data)
+	}
 	return ioutil.NopCloser(strings.NewReader(data))
 }
 

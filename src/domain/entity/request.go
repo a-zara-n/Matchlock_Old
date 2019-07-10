@@ -16,6 +16,13 @@ type RequestInfo struct {
 
 //SetRequestINFO はリクエストの情報を設定します
 func (ri *RequestInfo) SetRequestINFO(r *http.Request) {
-	ri.Host, ri.Method, ri.URL, ri.Path, ri.Proto =
-		r.Host, r.Method, r.URL, ri.URL.Path, r.Proto
+	ri.Host = r.Host
+	ri.Method = r.Method
+	ri.URL = r.URL
+	ri.Path = ri.URL.Path
+	ri.Proto = r.Proto
+}
+
+func (ri *RequestInfo) GetStartLine() []string {
+	return []string{ri.Method, ri.Path, ri.Proto}
 }
