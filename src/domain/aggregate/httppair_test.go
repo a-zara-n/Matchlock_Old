@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -44,5 +45,12 @@ func TestIsEdit(t *testing.T) {
 	httppair.EditRequest = NewHTTPRequestByRequest(&testRequest2[0])
 	if !httppair.IsEdited() {
 		t.Error("正しい値が帰ってきていません")
+	}
+}
+
+func TestRequestStartLine(t *testing.T) {
+	httppair.Request = NewHTTPRequestByRequest(&testRequest1[0])
+	if !reflect.DeepEqual(httppair.Request.Info.GetStartLine(), []string{"POST", "/testing/", "HTTP/1.0"}) {
+		t.Error("帰ってきた値が異なります")
 	}
 }
