@@ -21,22 +21,16 @@ type ResponseBody struct {
 }
 
 //NewResponseBodyRepositry はResponseBodyRepositryを取得する
-func NewResponseBodyRepositry(Identifier string, IsEdit bool, db *gorm.DB) repository.ResponseBodyRepositry {
+func NewResponseBodyRepositry(db *gorm.DB) repository.ResponseBodyRepositry {
 	return &ResponseBodyRepositry{
-		historyCommon{Identifier, IsEdit, db},
+		historyCommon{DB: db},
 	}
 }
 
-//SetIsEdit は編集のフラグを書き換えることができます
-func (r *ResponseBodyRepositry) SetIsEdit(flag bool) { r.IsEdit = flag }
-
-//SetIdentifier はIdentifierを書き換えることができます
-func (r *ResponseBodyRepositry) SetIdentifier(id string) { r.Identifier = id }
-
 //Insert はBodyを保存します
-func (r *ResponseBodyRepositry) Insert(e *entity.Body) bool {
+func (r *ResponseBodyRepositry) Insert(Identifier string, e *entity.Body) bool {
 	insertData := &ResponseBody{
-		Identifier: r.Identifier,
+		Identifier: Identifier,
 		Body:       e.Body,
 		Encodetype: e.Encodetype,
 		Length:     e.Length,
@@ -46,9 +40,9 @@ func (r *ResponseBodyRepositry) Insert(e *entity.Body) bool {
 }
 
 //Select はentity.Bodyを取得出来る
-func (r *ResponseBodyRepositry) Select() *entity.Body {
+func (r *ResponseBodyRepositry) Select(Identifier string) *entity.Body {
 	rets := []*ResponseBody{}
-	r.DB.Where("Identifier = ?", r.Identifier).Find(rets)
+	r.DB.Where("Identifier = ?", Identifier).Find(rets)
 	retentity := &entity.Body{
 		Body:       rets[0].Body,
 		Encodetype: rets[0].Encodetype,

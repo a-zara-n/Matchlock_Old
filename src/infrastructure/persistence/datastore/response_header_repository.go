@@ -22,22 +22,16 @@ type ResponseHeader struct {
 }
 
 //NewResponseHeaderRepositry はResponseHeaderRepositryを取得する
-func NewResponseHeaderRepositry(Identifier string, IsEdit bool, db *gorm.DB) repository.ResponseHeaderRepositry {
+func NewResponseHeaderRepositry(db *gorm.DB) repository.ResponseHeaderRepositry {
 	return &ResponseHeaderRepositry{
-		historyCommon{Identifier, IsEdit, db},
+		historyCommon{DB: db},
 	}
 }
 
-//SetIsEdit は編集のフラグを書き換えることができます
-func (r *ResponseHeaderRepositry) SetIsEdit(flag bool) { r.IsEdit = flag }
-
-//SetIdentifier はIdentifierを書き換えることができます
-func (r *ResponseHeaderRepositry) SetIdentifier(id string) { r.Identifier = id }
-
 //Insert はResponseHeaderを保存します
-func (r *ResponseHeaderRepositry) Insert(e *entity.HTTPHeader) bool {
+func (r *ResponseHeaderRepositry) Insert(Identifier string, e *entity.HTTPHeader) bool {
 	insertHeader := &ResponseHeader{
-		Identifier: r.Identifier,
+		Identifier: Identifier,
 	}
 	for _, key := range e.GetKeys() {
 		insertHeader.Name = key
@@ -48,9 +42,9 @@ func (r *ResponseHeaderRepositry) Insert(e *entity.HTTPHeader) bool {
 }
 
 //Select はentity.HTTPHeader を取得できる
-func (r *ResponseHeaderRepositry) Select() *entity.HTTPHeader {
+func (r *ResponseHeaderRepositry) Select(Identifier string) *entity.HTTPHeader {
 	rets := []*ResponseHeader{}
-	r.DB.Where("Identifier = ?", r.Identifier).Find(rets)
+	r.DB.Where("Identifier = ?", Identifier).Find(rets)
 	retentity := &entity.HTTPHeader{}
 	for _, data := range rets {
 		retentity.Header.Add(data.Name, data.Value)

@@ -6,7 +6,6 @@ import (
 
 //RequestDataRepositry はDBを操作する関数を定義したinterfaceを記述しています
 type RequestDataRepositry interface {
-	Insert(e *entity.Data) bool
-	Select() *entity.Data
-	HistryCommon
+	Insert(Identifier string, IsEdit bool, e *entity.Data) bool
+	Select(Identifier string, IsEdit bool) *entity.Data
 }

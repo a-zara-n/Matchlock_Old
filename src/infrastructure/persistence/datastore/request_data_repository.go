@@ -28,23 +28,17 @@ type RequestData struct {
 }
 
 //NewRequestDataRepositry はRequestDataを取得する
-func NewRequestDataRepositry(Identifier string, IsEdit bool, db *gorm.DB) repository.RequestDataRepositry {
+func NewRequestDataRepositry(db *gorm.DB) repository.RequestDataRepositry {
 	return &RequestDataRepositry{
-		historyCommon{Identifier, IsEdit, db},
+		historyCommon{DB: db},
 	}
 }
 
-//SetIsEdit は編集のフラグを書き換えることができます
-func (r *RequestDataRepositry) SetIsEdit(flag bool) { r.IsEdit = flag }
-
-//SetIdentifier はIdentifierを書き換えることができます
-func (r *RequestDataRepositry) SetIdentifier(id string) { r.Identifier = id }
-
 //Insert はRequestDataを保存します
-func (r *RequestDataRepositry) Insert(e *entity.Data) bool {
+func (r *RequestDataRepositry) Insert(Identifier string, IsEdit bool, e *entity.Data) bool {
 	insertData := &RequestData{
-		Identifier: r.Identifier,
-		IsEdit:     r.IsEdit,
+		Identifier: Identifier,
+		IsEdit:     IsEdit,
 		Style:      e.Type,
 	}
 	for _, key := range e.GetKeys() {
@@ -103,9 +97,9 @@ func retstring(in interface{}) []string {
 }
 
 //Select はentity.Dataを取得します
-func (r *RequestDataRepositry) Select() *entity.Data {
+func (r *RequestDataRepositry) Select(Identifier string, IsEdit bool) *entity.Data {
 	rets := []*RequestData{}
-	r.DB.Where("Identifier = ? AND IsEdit = ?", r.Identifier, r.IsEdit).Find(rets)
+	r.DB.Where("Identifier = ? AND IsEdit = ?", Identifier, IsEdit).Find(rets)
 	retentity := &entity.Data{}
 	retentity.Type = rets[0].Type
 	for _, data := range rets {

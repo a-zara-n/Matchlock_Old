@@ -6,8 +6,7 @@ import (
 )
 
 type RequestRepositry interface {
-	Insert(a *aggregate.Request) bool
-	GetRequest() *aggregate.Request
-	Select() *entity.RequestInfo
-	HistryCommon
+	Insert(Identifier string, IsEdit bool, a *aggregate.Request) bool
+	GetRequest(Identifier string, IsEdit bool) *aggregate.Request
+	Select(Identifier string, IsEdit bool) *entity.RequestInfo
 }

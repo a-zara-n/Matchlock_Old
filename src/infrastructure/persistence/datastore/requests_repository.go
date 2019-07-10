@@ -29,43 +29,29 @@ type Request struct {
 }
 
 //NewRequestRepositry はRequestRepositryを取得する
-func NewRequestRepositry(Identifier string, IsEdit bool, db *gorm.DB) repository.RequestRepositry {
-	datarepo := NewRequestDataRepositry(Identifier, IsEdit, db)
-	headrepo := NewRequestHeaderRepositry(Identifier, IsEdit, db)
+func NewRequestRepositry(db *gorm.DB) repository.RequestRepositry {
+	datarepo := NewRequestDataRepositry(db)
+	headrepo := NewRequestHeaderRepositry(db)
 	return &RequestRepositry{
-		historyCommon{Identifier, IsEdit, db},
+		historyCommon{DB: db},
 		headrepo,
 		datarepo,
 	}
 }
 
-//SetIsEdit は編集のフラグを書き換えることができます
-func (r *RequestRepositry) SetIsEdit(flag bool) {
-	r.Data.SetIsEdit(flag)
-	r.Header.SetIsEdit(flag)
-	r.IsEdit = flag
-}
-
-//SetIdentifier はIdentifierを書き換えることができます
-func (r *RequestRepositry) SetIdentifier(id string) {
-	r.Data.SetIdentifier(id)
-	r.Header.SetIdentifier(id)
-	r.Identifier = id
-}
-
 //Insert はaggregate.Requestに保存されたデータをDBに格納する
-func (r *RequestRepositry) Insert(a *aggregate.Request) bool {
-	go r.insert(a.Info)
-	go r.Data.Insert(a.Data)
-	go r.Header.Insert(a.Header)
+func (r *RequestRepositry) Insert(Identifier string, IsEdit bool, a *aggregate.Request) bool {
+	go r.insert(Identifier, IsEdit, a.Info)
+	go r.Data.Insert(Identifier, IsEdit, a.Data)
+	go r.Header.Insert(Identifier, IsEdit, a.Header)
 	return true
 }
 
 //Insert はRequestInfoを保存します
-func (r *RequestRepositry) insert(e *entity.RequestInfo) bool {
+func (r *RequestRepositry) insert(Identifier string, IsEdit bool, e *entity.RequestInfo) bool {
 	insertRequestInfo := &Request{
-		Identifier: r.Identifier,
-		IsEdit:     r.IsEdit,
+		Identifier: Identifier,
+		IsEdit:     IsEdit,
 		Host:       e.Host,
 		Method:     e.Method,
 		URL:        e.URL.String(),
@@ -77,19 +63,19 @@ func (r *RequestRepositry) insert(e *entity.RequestInfo) bool {
 }
 
 //GetRequest は全てのデータを保持した状態のRequestを取得できる
-func (r *RequestRepositry) GetRequest() *aggregate.Request {
+func (r *RequestRepositry) GetRequest(Identifier string, IsEdit bool) *aggregate.Request {
 	retentity := &aggregate.Request{
-		Info:   r.Select(),
-		Header: r.Header.Select(),
-		Data:   r.Data.Select(),
+		Info:   r.Select(Identifier, IsEdit),
+		Header: r.Header.Select(Identifier, IsEdit),
+		Data:   r.Data.Select(Identifier, IsEdit),
 	}
 	return retentity
 }
 
 //Select はRequest Infoを取得出来る
-func (r *RequestRepositry) Select() *entity.RequestInfo {
+func (r *RequestRepositry) Select(Identifier string, IsEdit bool) *entity.RequestInfo {
 	rets := []*Request{}
-	r.DB.Where("Identifier = ? AND IsEdit = ?", r.Identifier, r.IsEdit).Find(rets)
+	r.DB.Where("Identifier = ? AND IsEdit = ?", Identifier, IsEdit).Find(rets)
 	u, _ := url.Parse(rets[0].URL)
 	retentity := &entity.RequestInfo{
 		Host:   rets[0].Host,

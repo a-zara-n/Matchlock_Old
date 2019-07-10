@@ -26,42 +26,28 @@ type Response struct {
 }
 
 //NewResponseRepositry はResponseRepositryを取得する
-func NewResponseRepositry(Identifier string, IsEdit bool, db *gorm.DB) repository.ResponseRepositry {
-	header := NewResponseHeaderRepositry(Identifier, IsEdit, db)
-	body := NewResponseBodyRepositry(Identifier, IsEdit, db)
+func NewResponseRepositry(db *gorm.DB) repository.ResponseRepositry {
+	header := NewResponseHeaderRepositry(db)
+	body := NewResponseBodyRepositry(db)
 	return &ResponseRepositry{
-		historyCommon{Identifier, IsEdit, db},
+		historyCommon{DB: db},
 		header,
 		body,
 	}
 }
 
-//SetIsEdit は編集のフラグを書き換えることができます
-func (r *ResponseRepositry) SetIsEdit(flag bool) {
-	go r.Header.SetIsEdit(flag)
-	go r.Body.SetIsEdit(flag)
-	r.IsEdit = flag
-}
-
-//SetIdentifier はIdentifierを書き換えることができます
-func (r *ResponseRepositry) SetIdentifier(id string) {
-	go r.Header.SetIdentifier(id)
-	go r.Body.SetIdentifier(id)
-	r.Identifier = id
-}
-
 //Insert はResponseを保存します
-func (r *ResponseRepositry) Insert(a *aggregate.Response) bool {
-	go r.insert(&a.Info)
-	go r.Header.Insert(&a.Header)
-	go r.Body.Insert(&a.Body)
+func (r *ResponseRepositry) Insert(Identifier string, a *aggregate.Response) bool {
+	go r.insert(Identifier, &a.Info)
+	go r.Header.Insert(Identifier, &a.Header)
+	go r.Body.Insert(Identifier, &a.Body)
 	return true
 }
 
 //Insert はRequestInfoを保存します
-func (r *ResponseRepositry) insert(e *entity.ResponseInfo) bool {
+func (r *ResponseRepositry) insert(Identifier string, e *entity.ResponseInfo) bool {
 	insertRequestInfo := &Response{
-		Identifier: r.Identifier,
+		Identifier: Identifier,
 		Status:     e.Status,
 		StatusCode: e.StatusCode,
 		Proto:      e.Proto,
@@ -73,19 +59,19 @@ func (r *ResponseRepositry) insert(e *entity.ResponseInfo) bool {
 }
 
 //GetRequest はaggregate.Responseを取得します
-func (r *ResponseRepositry) GetRequest() *aggregate.Response {
+func (r *ResponseRepositry) GetRequest(Identifier string) *aggregate.Response {
 	retentity := &aggregate.Response{
-		Info:   *r.Select(),
-		Header: *r.Header.Select(),
-		Body:   *r.Body.Select(),
+		Info:   *r.Select(Identifier),
+		Header: *r.Header.Select(Identifier),
+		Body:   *r.Body.Select(Identifier),
 	}
 	return retentity
 }
 
 //Select はentity.ResponseInfoを取得します
-func (r *ResponseRepositry) Select() *entity.ResponseInfo {
+func (r *ResponseRepositry) Select(Identifier string) *entity.ResponseInfo {
 	rets := []*Response{}
-	r.DB.Where("Identifier = ?", r.Identifier).Find(rets)
+	r.DB.Where("Identifier = ?", Identifier).Find(rets)
 	retentity := &entity.ResponseInfo{
 		Status:     rets[0].Status,
 		StatusCode: rets[0].StatusCode,
