@@ -21,12 +21,12 @@ type httpServer struct {
 }
 
 //NewHTTPServer は
-func NewHTTPServer(c *entity.Channel, h usecase.HTMLUseCase, api *usecase.APIUsecase, ws usecase.WebSocketUsecase) HttpServer {
+func NewHTTPServer(c *entity.Channel, h usecase.HTMLUsecase, api *usecase.APIUsecase, ws usecase.WebSocketUsecase, m usecase.ManagerUsecase) HttpServer {
 	return &httpServer{
 		htmlhandler.NewHTMLHandler(h),
 		apihandler.NewAPIHandler(c, api),
 		websockethandler.NewWebSocketHandler(c, ws),
-		middleware.NewMiddleware(c),
+		middleware.NewMiddleware(m),
 	}
 }
 

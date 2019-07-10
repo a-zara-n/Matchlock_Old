@@ -1,17 +1,21 @@
 package middleware
 
 import (
-	"github.com/a-zara-n/Matchlock/src/domain/entity"
+	"github.com/a-zara-n/Matchlock/src/application/usecase"
 )
 
 //Middleware はMiddlewareの動作を定義したものになります
 type Middleware interface {
+	Run()
 }
 type middleware struct {
-	channel *entity.Channel
+	usecase.ManagerUsecase
 }
 
 // NewMiddleware はMiddlewareを新規で作成します
-func NewMiddleware(c *entity.Channel) Middleware {
-	return middleware{c}
+func NewMiddleware(m usecase.ManagerUsecase) Middleware {
+	return &middleware{m}
+}
+func (m *middleware) Run() {
+	m.InternalCommunication()
 }
