@@ -13,10 +13,17 @@ type Request struct {
 	Data   *entity.Data
 }
 
+//NewHTTPRequestByRequest はhttp.Requestを利用しaggregate.Requestを取得できます
+func NewHTTPRequestByRequest(req *http.Request) *Request {
+	request := &Request{}
+	request.SetHTTPRequestByRequest(req)
+	return request
+}
+
 //SetHTTPRequestByRequest はhttp.Requestを元に設定をします
 func (r *Request) SetHTTPRequestByRequest(req *http.Request) {
-	go r.Info.SetRequestINFO(req)
-	go r.Header.SetHTTPHeader(req.Header)
+	r.Info.SetRequestINFO(req)
+	r.Header.SetHTTPHeader(req.Header)
 	req.Body = r.Data.SetDataByHTTPBody(req.Body)
 }
 
