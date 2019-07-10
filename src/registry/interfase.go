@@ -12,7 +12,7 @@ import (
 //Interface はinterfase層で必要なものをまとめています
 type Interface interface {
 	NewProxy(usecase application.ProxyLogic) proxy.Proxy
-	NewHTTPServer(c *entity.Channel, h usecase.HTMLUseCase, api *usecase.APIUsecase) httpserver.HttpServer
+	NewHTTPServer(c *entity.Channel, h usecase.HTMLUsecase, api *usecase.APIUsecase) httpserver.HttpServer
 	NewCommand() command.Command
 }
 
@@ -22,8 +22,8 @@ func NewProxy(c *entity.Channel, application application.ProxyLogic) proxy.Proxy
 }
 
 //NewHTTPServer はサーバー起動に必要なhttpServerを取得します
-func NewHTTPServer(c *entity.Channel, h usecase.HTMLUseCase, api *usecase.APIUsecase, ws usecase.WebSocketUsecase) httpserver.HttpServer {
-	return httpserver.NewHTTPServer(c, h, api, ws)
+func NewHTTPServer(c *entity.Channel, h usecase.HTMLUsecase, api *usecase.APIUsecase, ws usecase.WebSocketUsecase, manager usecase.ManagerUsecase) httpserver.HttpServer {
+	return httpserver.NewHTTPServer(c, h, api, ws, manager)
 }
 
 //NewCommand はコマンドに必要な処理を永続化します

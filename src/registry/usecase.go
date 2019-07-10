@@ -4,14 +4,16 @@ import (
 	"github.com/a-zara-n/Matchlock/src/application"
 	"github.com/a-zara-n/Matchlock/src/application/usecase"
 	"github.com/a-zara-n/Matchlock/src/domain/entity"
+	"github.com/a-zara-n/Matchlock/src/domain/repository"
 )
 
 type Usecase interface {
 	NewLogic(white *entity.WhiteList, c *entity.Channel) application.ProxyLogic
-	NewHTMLUseCase() usecase.HTMLUseCase
-	NewAPIUsecase() *usecase.APIUsecase
+	NewHTMLUseCase() usecase.HTMLUsecase
+	NewAPIUsecase(memreq repository.RequestRepositry, memres repository.ResponseRepositry) *usecase.APIUsecase
 	NewCommandUsecase() usecase.CommandUsecase
-	NewWebSocketUsecase() usecase.WebSocketUsecase
+	NewWebSocketUsecase(memreq repository.RequestRepositry, memres repository.ResponseRepositry) usecase.WebSocketUsecase
+	NewManagerUsecase(channel *entity.Channel, memreq repository.RequestRepositry, memres repository.ResponseRepositry) usecase.ManagerUsecase
 }
 
 //NewLogic はusecase.ProxyLogicを取得
@@ -20,16 +22,21 @@ func NewLogic(white *entity.WhiteList, c *entity.Channel) application.ProxyLogic
 }
 
 //NewHTMLUseCase はHTMLのレンダリングを行う
-func NewHTMLUseCase() usecase.HTMLUseCase {
-	return usecase.NewHTMLUseCase()
+func NewHTMLUseCase() usecase.HTMLUsecase {
+	return usecase.NewHTMLUsecase()
 }
 
 //NewAPIUsecase はAPIの処理を取得
-func NewAPIUsecase() *usecase.APIUsecase {
-	return usecase.NewAPIUsecase()
+func NewAPIUsecase(memreq repository.RequestRepositry, memres repository.ResponseRepositry) *usecase.APIUsecase {
+	return usecase.NewAPIUsecase(memreq, memres)
 }
 
 //NewWebSocketUsecase はWebSocket用のUseCaseを取得します
-func NewWebSocketUsecase() usecase.WebSocketUsecase {
-	return usecase.NewWebSocketUsecase()
+func NewWebSocketUsecase(memreq repository.RequestRepositry, memres repository.ResponseRepositry) usecase.WebSocketUsecase {
+	return usecase.NewWebSocketUsecase(memreq, memres)
+}
+
+//NewManagerUsecase は管理を行うためのManagerUsecaseを取得します
+func NewManagerUsecase(channel *entity.Channel, memreq repository.RequestRepositry, memres repository.ResponseRepositry) usecase.ManagerUsecase {
+	return usecase.NewManagerUsecase(channel, memreq, memres)
 }

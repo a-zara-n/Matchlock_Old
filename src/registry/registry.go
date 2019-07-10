@@ -13,6 +13,7 @@ type Registry interface {
 	Entity
 	Usecase
 	Interface
+	Repository
 	//総合的なランディング
 	Run()
 }
@@ -20,17 +21,24 @@ type Registry interface {
 //Run はサーバー関連の起動をする
 func Run() {
 	var (
+		//config
+		dbconf = NewDatabaseConfig()
+		db     = dbconf.OpenDB(dbconf.GetConnect())
 		//Entity
 		whitelist = NewWhiteList()
 		channel   = NewChannel()
+		//Repository
+		reqrepo = NewRequestRepositry(db)
+		resrepo = NewResponseRepositry(db)
 		//UseCase
 		proxylogic = NewLogic(whitelist, channel)
 		html       = NewHTMLUseCase()
-		apis       = NewAPIUsecase()
-		ws         = NewWebSocketUsecase()
+		apis       = NewAPIUsecase(reqrepo, resrepo)
+		ws         = NewWebSocketUsecase(reqrepo, resrepo)
+		manager    = NewManagerUsecase(channel, reqrepo, resrepo)
 		//Interface
 		proxy   = NewProxy(channel, proxylogic)
-		http    = NewHTTPServer(channel, html, apis, ws)
+		http    = NewHTTPServer(channel, html, apis, ws, manager)
 		command = NewCommand()
 	)
 	//Runding

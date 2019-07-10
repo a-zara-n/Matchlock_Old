@@ -6,11 +6,11 @@ import (
 	"github.com/labstack/echo"
 )
 
-type HTMLUseCase interface {
+type HTMLUsecase interface {
 	GetIndex(c echo.Context) error
 }
 
-type htmlUseCase struct{}
+type htmlUsecase struct{}
 
 type ServiceInfo struct {
 	Title string
@@ -20,11 +20,11 @@ var serviceinfo = ServiceInfo{
 	"Web dynamic testing",
 }
 
-func NewHTMLUseCase() HTMLUseCase {
-	return &htmlUseCase{}
+func NewHTMLUsecase() HTMLUsecase {
+	return &htmlUsecase{}
 }
 
-func (h *htmlUseCase) GetIndex(c echo.Context) error {
+func (h *htmlUsecase) GetIndex(c echo.Context) error {
 	data := struct {
 		ServiceInfo
 		Host string
