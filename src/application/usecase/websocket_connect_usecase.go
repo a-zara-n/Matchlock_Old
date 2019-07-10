@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/a-zara-n/Matchlock/src/domain/aggregate"
+	"github.com/a-zara-n/Matchlock/src/domain/repository"
 )
 
 type WebSocketUsecase interface {
@@ -14,7 +15,7 @@ type websocketusecase struct {
 	request aggregate.Request
 }
 
-func NewWebSocketUsecase() WebSocketUsecase {
+func NewWebSocketUsecase(memreq repository.RequestRepositry, memres repository.ResponseRepositry) WebSocketUsecase {
 	return &websocketusecase{request: aggregate.Request{}}
 }
 
