@@ -10,6 +10,6 @@ type API interface {
 type api struct {
 }
 
-func SetHandler(c *entity.Channel, a *usecase.APIUsecase) API {
+func NewAPIHandler(c *entity.Channel, a *usecase.APIUsecase) API {
 	return &api{}
 }
