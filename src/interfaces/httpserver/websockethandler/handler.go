@@ -68,6 +68,11 @@ func (ws *webSocketHandler) ServeHTTP(cont echo.Context) error {
 	client.read()
 	return nil
 }
+
+/*
+TODO :
+WebSocketとProxy_logicのミドルウェアをmiddlewareで作成する
+*/
 func (ws *webSocketHandler) Run() {
 	reqchan := ws.channel.Request
 	for {
