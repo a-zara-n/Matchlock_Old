@@ -1,0 +1,6 @@
+DATABASE: 
+    DBMS: sqlite3
+    USER: ""
+    PASS: ""
+    PROTOCOL: ""
+    DBNAME: ./_db/test.db
