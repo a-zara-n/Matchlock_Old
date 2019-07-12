@@ -3,9 +3,10 @@ package websockethandler
 import (
 	"log"
 
+	"github.com/a-zara-n/Matchlock/src/config"
+
 	"github.com/a-zara-n/Matchlock/src/application/usecase"
 	"github.com/a-zara-n/Matchlock/src/domain/aggregate"
-	"github.com/a-zara-n/Matchlock/src/domain/entity"
 	"github.com/gorilla/websocket"
 	"github.com/labstack/echo"
 )
@@ -25,7 +26,7 @@ type webSocketHandler struct {
 	// clientsには在室しているすべてのクライアントが保持されます。
 	clients map[*client]bool
 	// tracerはチャットルーム上で行われた操作のログを受け取ります。
-	channel *entity.Channel
+	channel *config.HTTPServerChannel
 	request aggregate.Request
 	usecase usecase.WebSocketUsecase
 }
@@ -37,7 +38,7 @@ type WebSocketRequest struct {
 }
 
 //NewWebSocketHandler はWebSocketのコネクションん管理を行います
-func NewWebSocketHandler(c *entity.Channel, ws usecase.WebSocketUsecase) WebSocketHandler {
+func NewWebSocketHandler(c *config.HTTPServerChannel, ws usecase.WebSocketUsecase) WebSocketHandler {
 	return &webSocketHandler{
 		forward: make(chan WebSocketRequest),
 		join:    make(chan *client),
@@ -74,7 +75,6 @@ TODO :
 WebSocketとProxy_logicのミドルウェアをmiddlewareで作成する
 */
 func (ws *webSocketHandler) Run() {
-	reqchan := ws.channel.Request
 	for {
 		select {
 		case client := <-ws.join:
@@ -85,8 +85,8 @@ func (ws *webSocketHandler) Run() {
 			delete(ws.clients, client)
 			close(client.send)
 		case msg := <-ws.forward:
-			reqchan.HMgToHsSignal <- ws.usecase.GetHTTPRequestByRequest(msg.Data)
-		case r := <-reqchan.HMgToHsSignal:
+			ws.channel.Response <- ws.usecase.GetHTTPRequestByRequest(msg.Data)
+		case r := <-ws.channel.Request:
 			mes := WebSocketRequest{Type: "Request", Data: ws.usecase.GetHTTPRequestByString(r)}
 			for client := range ws.clients {
 				select {

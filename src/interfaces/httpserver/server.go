@@ -2,7 +2,7 @@ package httpserver
 
 import (
 	"github.com/a-zara-n/Matchlock/src/application/usecase"
-	"github.com/a-zara-n/Matchlock/src/domain/entity"
+	"github.com/a-zara-n/Matchlock/src/config"
 	"github.com/a-zara-n/Matchlock/src/interfaces/httpserver/apihandler"
 	"github.com/a-zara-n/Matchlock/src/interfaces/httpserver/htmlhandler"
 	"github.com/a-zara-n/Matchlock/src/interfaces/httpserver/middleware"
@@ -21,10 +21,10 @@ type httpServer struct {
 }
 
 //NewHTTPServer は
-func NewHTTPServer(c *entity.Channel, h usecase.HTMLUsecase, api *usecase.APIUsecase, ws usecase.WebSocketUsecase, m usecase.ManagerUsecase) HttpServer {
+func NewHTTPServer(c *config.HTTPServerChannel, h usecase.HTMLUsecase, api *usecase.APIUsecase, ws usecase.WebSocketUsecase, m usecase.ManagerUsecase) HttpServer {
 	return &httpServer{
 		htmlhandler.NewHTMLHandler(h),
-		apihandler.NewAPIHandler(c, api),
+		apihandler.NewAPIHandler(api),
 		websockethandler.NewWebSocketHandler(c, ws),
 		middleware.NewMiddleware(m),
 	}
