@@ -1,13 +1,62 @@
 package testdata
 
 import (
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
 )
 
+//HTTPTestData はHTTP系のテストデータをまとめたものです
+type HTTPTestData struct {
+	Request      map[string]Request
+	RequestCase  []string
+	Response     map[string]Response
+	ResponseCase []string
+}
+
+func (h *HTTPTestData) FetchTestRequest(i int) Request {
+	return h.Request[h.RequestCase[i]]
+}
+
+func (h *HTTPTestData) FetchTestResponse(i int) Request {
+	return h.Request[h.RequestCase[i]]
+}
+
+//Request は
+type Request struct {
+	HTTP   http.Request
+	String string
+	header
+	Query query
+}
+type query struct {
+	Raw    string
+	Keys   []string
+	Result map[string]interface{}
+	Fetch  string
+}
+type header struct {
+	Header      http.Header
+	HeaderSlice []string
+}
+
+//Response は
+type Response struct {
+	HTTP   http.Response
+	String string
+	header
+	Body body
+}
+
+type body struct {
+	Raw string
+	IO  io.ReadCloser
+}
+
 var (
+	host = "localhost"
 	//TestURLPackageURL はテスト用のURLデータ
 	TestURLPackageURL, _ = url.Parse("http://localhost/testing/")
 	//TestURLPackageURLPlusQuery はテスト用のクエリ付きのデータです
@@ -19,65 +68,141 @@ var (
 		"Accept-Language": {"en-us"},
 		"Foo":             {"Bar", "two"},
 	}
+	TestFailHeader = http.Header{}
 	//TestHeaderSlice はHeaderの情報をstring sliceでまとめたもの
-	TestHeaderSlice = []string{"Accept-Encoding: gzip, deflate", "Accept-Language: en-us", "Foo: Bar,two", "Host: loacalhost"}
+	TestHeaderSlice  = []string{"Accept-Encoding: gzip, deflate", "Accept-Language: en-us", "Foo: Bar,two", "Host: loacalhost"}
+	Testheaderstruct = header{TestHeader, TestHeaderSlice}
+
+	TestCaseSlice = []string{"FORM_success", "FORM_ADD_success", "JSON_success", "JSON_fail"}
 	//TestQuery はFORM形式とJSON形式のクエリ
-	TestQuery = map[string]map[string]interface{}{
-		"FORM": {
-			"Raw":    `name=hoge&age=20&like=mikan`,
-			"Keys":   []string{"name", "age", "like"},
-			"Result": map[string]interface{}{"name": "hoge", "age": "20", "like": "mikan"},
-			"Fetch":  `age=20&like=mikan&name=hoge`,
+	TestQuery = map[string]query{
+		TestCaseSlice[0]: {
+			Raw:    `name=hoge&age=20&like=mikan`,
+			Keys:   []string{"name", "age", "like"},
+			Result: map[string]interface{}{"name": "hoge", "age": "20", "like": "mikan"},
+			Fetch:  `age=20&like=mikan&name=hoge`,
 		},
-		"FORM_ADD": {
-			"Raw":    `name=hoge&age=20&like=mikanA`,
-			"Keys":   []string{"name", "age", "like"},
-			"Result": map[string]interface{}{"name": "hoge", "age": "20", "like": "mikanA"},
-			"Fetch":  `age=20&like=mikanA&name=hoge`,
+		TestCaseSlice[1]: {
+			Raw:    `name=hoge&age=20&like=mikanA`,
+			Keys:   []string{"name", "age", "like"},
+			Result: map[string]interface{}{"name": "hoge", "age": "20", "like": "mikanA"},
+			Fetch:  `age=20&like=mikanA&name=hoge`,
 		},
-		"JSON_Success": {
-			"Raw":    `{"age":20,"lang":["jp","en","fr"],"like":"mikan","name":"hoge"}`,
-			"Keys":   []string{"name", "age", "like", "lang"},
-			"Result": map[string]interface{}{"name": "hoge", "age": float64(20), "like": "mikan", "lang": []interface{}{"jp", "en", "fr"}},
-			"Fetch":  `{"age":20,"lang":["jp","en","fr"],"like":"mikan","name":"hoge"}`,
+		TestCaseSlice[2]: {
+			Raw:    `{"age":20,"lang":["jp","en","fr"],"like":"mikan","name":"hoge"}`,
+			Keys:   []string{"name", "age", "like", "lang"},
+			Result: map[string]interface{}{"name": "hoge", "age": float64(20), "like": "mikan", "lang": []interface{}{"jp", "en", "fr"}},
+			Fetch:  `{"age":20,"lang":["jp","en","fr"],"like":"mikan","name":"hoge"}`,
 		},
-		"JSON_Fail": {
-			"Raw":    `{"name":hoge}`,
-			"Keys":   []string{},
-			"Result": map[string]interface{}{},
-			"Fetch":  `{}`,
+		TestCaseSlice[3]: {
+			Raw:    `{"name":hoge}`,
+			Keys:   []string{},
+			Result: map[string]interface{}{},
+			Fetch:  `{}`,
 		},
-	}
-	//TestDataNames は
-	TestDataNames = []string{"StandardPOST", "AddStringPOST", "JSONPOST", "JSONPOST_Fail", "StandardGET"}
-	//TestDataKeys は
-	TestDataKeys = map[string]string{
-		"StandardPOST":  "FORM",
-		"AddStringPOST": "FORM_ADD",
-		"JSONPOST":      "JSON_Success",
-		"JSONPOST_Fail": "JSON_Fail",
-		"StandardGET":   "",
 	}
 
-	//TestSuccessReturn はパース成功後の値
-	TestSuccessReturn = map[string]string{
-		"StandardPOST":  "POST /testing/  HTTP/1.0\nAccept-Encoding: gzip, deflate\nAccept-Language: en-us\nFoo: Bar,two\nHost: loacalhost\n\n" + TestQuery["FORM"]["Raw"].(string),
-		"AddStringPOST": "POST /testing/  HTTP/1.0\nAccept-Encoding: gzip, deflate\nAccept-Language: en-us\nFoo: Bar,two\nHost: loacalhost\n\n" + TestQuery["FORM_Add"]["Raw"].(string),
-		"JSONPOST":      "POST /testing/  HTTP/1.0\nAccept-Encoding: gzip, deflate\nAccept-Language: en-us\nFoo: Bar,two\nHost: loacalhost\n\n" + TestQuery["JSON_Success"]["Raw"].(string),
-		"JSONPOST_Fail": "POST /testing/  HTTP/1.0\nAccept-Encoding: gzip, deflate\nAccept-Language: en-us\nFoo: Bar,two\nHost: loacalhost\n\n" + TestQuery["JSON_Fail"]["Raw"].(string),
-		"StandardGET":   "GET /testing/ ?input=usa HTTP/1.0\nAccept-Encoding: gzip, deflate\nAccept-Language: en-us\nFoo: Bar,two\nHost: loacalhost\n\n",
+	TestRequests = map[string]Request{
+		TestCaseSlice[0]: {
+			HTTP: http.Request{Method: "POST", URL: TestURLPackageURL, Proto: "HTTP/1.0", ProtoMajor: 1, ProtoMinor: 0, Header: TestHeader,
+				Body: ioutil.NopCloser(strings.NewReader(TestQuery[TestCaseSlice[0]].Raw)), ContentLength: int64(len(TestQuery[TestCaseSlice[0]].Raw)), Host: host},
+			String: "POST /testing/  HTTP/1.0\n" + strings.Join(TestHeaderSlice, "\n") + "\n\n" + TestQuery[TestCaseSlice[0]].Raw,
+			header: Testheaderstruct,
+			Query:  TestQuery[TestCaseSlice[0]],
+		},
+		TestCaseSlice[1]: {
+			HTTP: http.Request{Method: "POST", URL: TestURLPackageURL, Proto: "HTTP/1.0", ProtoMajor: 1, ProtoMinor: 0, Header: TestHeader,
+				Body: ioutil.NopCloser(strings.NewReader(TestQuery[TestCaseSlice[1]].Raw)), ContentLength: int64(len(TestQuery[TestCaseSlice[1]].Raw)), Host: host},
+			String: "POST /testing/  HTTP/1.0\n" + strings.Join(TestHeaderSlice, "\n") + "\n\n" + TestQuery[TestCaseSlice[1]].Raw,
+			header: Testheaderstruct,
+			Query:  TestQuery[TestCaseSlice[1]],
+		},
+		TestCaseSlice[2]: {
+			HTTP: http.Request{Method: "POST", URL: TestURLPackageURL, Proto: "HTTP/1.0", ProtoMajor: 1, ProtoMinor: 0, Header: TestHeader,
+				Body: ioutil.NopCloser(strings.NewReader(TestQuery[TestCaseSlice[2]].Raw)), ContentLength: int64(len(TestQuery[TestCaseSlice[2]].Raw)), Host: host},
+			String: "POST /testing/  HTTP/1.0\n" + strings.Join(TestHeaderSlice, "\n") + "\n\n" + TestQuery[TestCaseSlice[2]].Raw,
+			header: Testheaderstruct,
+			Query:  TestQuery[TestCaseSlice[2]],
+		},
+		TestCaseSlice[3]: {
+			HTTP: http.Request{Method: "POST", URL: TestURLPackageURL, Proto: "HTTP/1.0", ProtoMajor: 1, ProtoMinor: 0, Header: TestHeader,
+				Body: ioutil.NopCloser(strings.NewReader(TestQuery[TestCaseSlice[3]].Raw)), ContentLength: int64(len(TestQuery[TestCaseSlice[3]].Raw)), Host: host},
+			String: "POST /testing/  HTTP/1.0\n" + strings.Join(TestHeaderSlice, "\n") + "\n\n" + TestQuery[TestCaseSlice[3]].Raw,
+			header: Testheaderstruct,
+			Query:  TestQuery[TestCaseSlice[3]],
+		},
 	}
-	//TestRequest はhttprequestの配列
-	TestRequest = map[string]http.Request{
-		"StandardPOST": {Method: "POST", URL: TestURLPackageURL, Proto: "HTTP/1.0", ProtoMajor: 1, ProtoMinor: 0, Header: TestHeader,
-			Body: ioutil.NopCloser(strings.NewReader(TestQuery["FORM"]["Raw"].(string))), ContentLength: int64(len(TestQuery["FORM"]["Raw"].(string))), Host: "localhost"},
-		"AddStringPOST": {Method: "POST", URL: TestURLPackageURL, Proto: "HTTP/1.0", ProtoMajor: 1, ProtoMinor: 0, Header: TestHeader,
-			Body: ioutil.NopCloser(strings.NewReader(TestQuery["FORM_Add"]["Raw"].(string))), ContentLength: int64(len(TestQuery["FORM_Add"]["Raw"].(string))), Host: "localhost"},
-		"JSONPOST": {Method: "POST", URL: TestURLPackageURL, Proto: "HTTP/1.0", ProtoMajor: 1, ProtoMinor: 0, Header: TestHeader,
-			Body: ioutil.NopCloser(strings.NewReader(TestQuery["JSON_Success"]["Raw"].(string))), ContentLength: int64(len(TestQuery["JSON_Success"]["Raw"].(string))), Host: "localhost"},
-		"JSONPOST_Fail": {Method: "POST", URL: TestURLPackageURL, Proto: "HTTP/1.0", ProtoMajor: 1, ProtoMinor: 0, Header: TestHeader,
-			Body: ioutil.NopCloser(strings.NewReader(TestQuery["JSON_Success"]["Raw"].(string))), ContentLength: int64(len(TestQuery["JSON_Fail"]["Raw"].(string))), Host: "localhost"},
-		"StandardGET": {Method: "GET", URL: TestURLPackageURLPlusQuery, Proto: "HTTP/1.0", ProtoMajor: 1, ProtoMinor: 0, Header: TestHeader,
-			Body: ioutil.NopCloser(strings.NewReader("")), Host: "localhost"},
+
+	TestResponse = http.Response{
+		Status:           "200 OK",
+		StatusCode:       200,
+		Proto:            "HTTP/1.0",
+		ProtoMajor:       1,
+		ProtoMinor:       0,
+		Header:           TestHeader,
+		TransferEncoding: []string{"chunked"},
+	}
+	TestHTML = `<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+ "http://www.w3.org/TR/html4/strict.dtd">
+
+<html>
+
+ <head>
+  <title>タイトルを指定する</title>
+ </head>
+
+ <body>
+  ここに内容を書く
+ </body>
+
+</html>`
+	TestBodys = map[string]body{
+		TestCaseSlice[0]: {
+			Raw: TestHTML,
+			IO:  ioutil.NopCloser(strings.NewReader(TestHTML)),
+		},
+		TestCaseSlice[1]: {
+			Raw: TestHTML,
+			IO:  ioutil.NopCloser(strings.NewReader(TestHTML)),
+		},
+		TestCaseSlice[2]: {
+			Raw: TestHTML,
+			IO:  ioutil.NopCloser(strings.NewReader(TestHTML)),
+		},
+		TestCaseSlice[3]: {
+			Raw: TestHTML,
+			IO:  ioutil.NopCloser(strings.NewReader(TestHTML)),
+		},
+	}
+	testHTTPSetFunc = func(casestr string) http.Response {
+		TestResponse.Body = TestBodys[casestr].IO
+		TestResponse.ContentLength = int64(len(TestBodys[casestr].Raw))
+		return TestResponse
+	}
+	TestResponses = map[string]Response{
+		TestCaseSlice[0]: {
+			HTTP:   testHTTPSetFunc(TestCaseSlice[0]),
+			String: TestResponse.Proto + " " + TestResponse.Status + "\n" + strings.Join(TestHeaderSlice, "\n") + "\n\n" + TestBodys[TestCaseSlice[0]].Raw,
+			header: Testheaderstruct,
+			Body:   TestBodys[TestCaseSlice[0]],
+		},
+		TestCaseSlice[1]: {
+			HTTP:   testHTTPSetFunc(TestCaseSlice[1]),
+			String: TestResponse.Proto + " " + TestResponse.Status + "\n" + strings.Join(TestHeaderSlice, "\n") + "\n\n" + TestBodys[TestCaseSlice[1]].Raw,
+			header: Testheaderstruct,
+			Body:   TestBodys[TestCaseSlice[1]],
+		},
+		TestCaseSlice[2]: {
+			HTTP:   testHTTPSetFunc(TestCaseSlice[2]),
+			String: TestResponse.Proto + " " + TestResponse.Status + "\n" + strings.Join(TestHeaderSlice, "\n") + "\n\n" + TestBodys[TestCaseSlice[2]].Raw,
+			header: Testheaderstruct,
+			Body:   TestBodys[TestCaseSlice[2]],
+		},
+		TestCaseSlice[3]: {
+			HTTP:   testHTTPSetFunc(TestCaseSlice[3]),
+			String: TestResponse.Proto + " " + TestResponse.Status + "\n" + strings.Join(TestHeaderSlice, "\n") + "\n\n" + TestBodys[TestCaseSlice[3]].Raw,
+			header: Testheaderstruct,
+			Body:   TestBodys[TestCaseSlice[3]],
+		},
 	}
 )
