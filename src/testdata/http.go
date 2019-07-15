@@ -22,8 +22,8 @@ func (h *HTTPTestData) FetchTestRequest(i int) *Request {
 func (h *HTTPTestData) GetRequestCount() int {
 	return len(h.RequestCase)
 }
-func (h *HTTPTestData) FetchTestResponse(i int) *Request {
-	return h.Request[h.RequestCase[i]]
+func (h *HTTPTestData) FetchTestResponse(i int) *Response {
+	return h.Response[h.RequestCase[i]]
 }
 func (h *HTTPTestData) GetResponseCount() int {
 	return len(h.ResponseCase)
@@ -77,14 +77,14 @@ var (
 	//TestHeader はテスト用のhttpHeader
 	TestHeader = http.Header{
 		"Host":            {"loacalhost"},
-		"Accept-Encoding": {"gzip, deflate"},
+		"Accept-Encoding": {"gzip", "deflate"},
 		"Accept-Language": {"en-us"},
 		"Foo":             {"Bar", "two"},
 	}
-	TestHeaderKeys = []string{"Host", "Accept-Encoding", "Accept-Language", "Foo"}
+	TestHeaderKeys = []string{"Accept-Encoding", "Accept-Language", "Foo", "Host"}
 	TestFailHeader = http.Header{}
 	//TestHeaderSlice はHeaderの情報をstring sliceでまとめたもの
-	TestHeaderSlice  = []string{"Accept-Encoding: gzip, deflate", "Accept-Language: en-us", "Foo: Bar,two", "Host: loacalhost"}
+	TestHeaderSlice  = []string{"Accept-Encoding: gzip,deflate", "Accept-Language: en-us", "Foo: Bar,two", "Host: loacalhost"}
 	Testheaderstruct = header{TestHeader, TestHeaderSlice}
 
 	TestCaseSlice = []string{"FORM_success", "FORM_ADD_success", "JSON_success", "JSON_fail", "GET", "GET_Query"}
