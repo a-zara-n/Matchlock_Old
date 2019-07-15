@@ -13,11 +13,23 @@ func (w *WhiteList) Add(reg string) {
 }
 
 //Del はWhiteListの削除をするための関数です
-func (w *WhiteList) Del(i int) {
+func (w *WhiteList) Del(i int) bool {
 	if i > len(w.List) {
-		return
+		return false
 	}
-	w.List = append(w.List[:i-1], w.List[i:]...)
+	if len(w.List) < 2 {
+		w.List = []*regexp.Regexp{}
+		return true
+	}
+	switch i {
+	case 0:
+		w.List = w.List[i+1:]
+	case len(w.List) - 1:
+		w.List = w.List[:len(w.List)-2]
+	default:
+		w.List = append(w.List[:i], w.List[i+1:]...)
+	}
+	return true
 }
 
 //Check はhostがWhiteListに含まれているかを確認する
