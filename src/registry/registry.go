@@ -4,6 +4,10 @@ import (
 	"os"
 	"os/signal"
 
+	"github.com/a-zara-n/Matchlock/src/infrastructure/persistence/datastore"
+
+	"github.com/jinzhu/gorm"
+
 	"github.com/a-zara-n/Matchlock/src/interfaces/httpserver"
 	"github.com/a-zara-n/Matchlock/src/interfaces/proxy"
 
@@ -48,6 +52,7 @@ func NewRegistry() Registry {
 		manager   = registry.NewManagerUsecase(&channel, reqrepo, resrepo, forward)
 	)
 	//Interface
+	registry.initDBschema(db)
 	registry.Channel = channel
 	registry.Proxy = registry.NewProxy(registry.NewLogic(registry.NewWhiteList(), channel.Proxy))
 	registry.HTTP = registry.NewHTTPServer(channel.Server, html, api, websocket, manager)
@@ -73,4 +78,18 @@ func sigClose(m config.Channel) {
 	signal.Notify(quit, os.Interrupt)
 	//<-m.ExitSignal
 	<-quit // ここでシグナルを受け取るまで以降の処理はされない
+}
+
+func (r *registry) initDBschema(db *gorm.DB) {
+	dbschema := []interface{}{
+		datastore.Request{},
+		datastore.RequestData{},
+		datastore.RequestHeader{},
+		datastore.Response{},
+		datastore.ResponseBody{},
+		datastore.ResponseHeader{},
+	}
+	for _, tablecshema := range dbschema {
+		db.AutoMigrate(tablecshema)
+	}
 }
