@@ -29,9 +29,10 @@ func main() {
 	// オプション
 	app.Flags = options()
 	sort.Sort(cli.FlagsByName(app.Flags))
+	matchlock := registry.NewRegistry()
 	app.Action = func(c *cli.Context) {
 		fmt.Println(title)
-		registry.Run()
+		matchlock.Run()
 	}
 	// アプリケーションの起動
 	err := app.Run(os.Args)

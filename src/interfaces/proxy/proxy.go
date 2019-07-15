@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/a-zara-n/Matchlock/src/application"
-	"github.com/a-zara-n/Matchlock/src/domain/entity"
 
 	"github.com/elazarl/goproxy"
 )
@@ -19,7 +18,7 @@ type proxy struct {
 }
 
 //NewProxy は新規でProxtの設定を提供します
-func NewProxy(c *entity.Channel, application application.ProxyLogic) Proxy {
+func NewProxy(application application.ProxyLogic) Proxy {
 	return &proxy{application: application}
 }
 
