@@ -58,16 +58,19 @@ func (d *Data) SetDataByHTTPBody(body io.ReadCloser) io.ReadCloser {
 	bufbody := new(bytes.Buffer)
 	bufbody.ReadFrom(body)
 	data := bufbody.String()
-	if data != "" {
-		d.SetData(data)
-	}
+	d.SetData(data)
+
 	return ioutil.NopCloser(strings.NewReader(data))
 }
 
 //SetData はDataエンティティにDataを設定するためのmethod
 func (d *Data) SetData(rawdata string) {
-	d.Data, d.Type = checkDataType(rawdata)
-	d.Keys = getKeys(d.Data)
+	if rawdata != "" {
+		d.Data, d.Type = checkDataType(rawdata)
+		d.Keys = getKeys(d.Data)
+		return
+	}
+	d.Type = "FORM"
 }
 
 //JSONであるかの検査時に利用する

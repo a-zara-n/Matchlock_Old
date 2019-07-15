@@ -38,14 +38,16 @@ func TestAddDataAndRemoveDataOfDataEntity(t *testing.T) {
 func TestSetDataAndFetchDataOfDataEntity(t *testing.T) {
 	for casestring, data := range testdata.TestQuery {
 		testingDataEntity.SetData(data.Raw)
+
 		result := data.Result
 		for key, v := range result {
 			if !reflect.DeepEqual(testingDataEntity.Data[key], v) {
 				t.Errorf("%v :値が異なっています", casestring)
 			}
 		}
+
 		if testingDataEntity.FetchData() != data.Fetch {
-			t.Errorf("%v :出力が異なります %v != %v", casestring, testingDataEntity.FetchData(), test.FetchTestRequest(0).Query.Fetch)
+			t.Errorf("%v :出力が異なります \n RetData :%v \n TestData : %v", casestring, testingDataEntity.FetchData(), data.Fetch)
 		}
 	}
 }
@@ -61,7 +63,7 @@ func TestSetDataByHTTPBodyAndFetchDataOfDataEntity(t *testing.T) {
 			}
 		}
 		if testingDataEntity.FetchData() != data.Fetch {
-			t.Errorf("%v :出力が異なります %v != %v", casestring, testingDataEntity.FetchData(), data.Fetch)
+			t.Errorf("%v :出力が異なります \nRetData : %v \nTestData : %v", casestring, testingDataEntity.FetchData(), data.Fetch)
 		}
 	}
 }
