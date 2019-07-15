@@ -16,8 +16,8 @@ func TestGetKeysOfDataEntity(t *testing.T) {
 	if len(NothingIsIncluded) > 0 {
 		t.Error("Keyが含まれています。")
 	}
-	testingDataEntity.Keys = []string{"hoge", "fuga", "piyo"}
-	if !reflect.DeepEqual(testingDataEntity.GetKeys(), []string{"hoge", "fuga", "piyo"}) {
+	testingDataEntity.Keys = test.FetchTestRequest(0).Query.Keys
+	if !reflect.DeepEqual(testingDataEntity.GetKeys(), test.FetchTestRequest(0).Query.Keys) {
 		t.Error("正しく返却されていません")
 	}
 	testingDataEntity.Keys = []string{}
@@ -37,15 +37,15 @@ func TestAddDataAndRemoveDataOfDataEntity(t *testing.T) {
 
 func TestSetDataAndFetchDataOfDataEntity(t *testing.T) {
 	for casestring, data := range testdata.TestQuery {
-		testingDataEntity.SetData(data["Raw"].(string))
-		res := data["Result"].(map[string]interface{})
-		for n, v := range res {
-			if !reflect.DeepEqual(testingDataEntity.Data[n], v) {
+		testingDataEntity.SetData(data.Raw)
+		result := data.Result
+		for key, v := range result {
+			if !reflect.DeepEqual(testingDataEntity.Data[key], v) {
 				t.Errorf("%v :値が異なっています", casestring)
 			}
 		}
-		if testingDataEntity.FetchData() != data["Fetch"] {
-			t.Errorf("%v :出力が異なります %v != %v", casestring, testingDataEntity.FetchData(), data["Fetch"])
+		if testingDataEntity.FetchData() != data.Fetch {
+			t.Errorf("%v :出力が異なります %v != %v", casestring, testingDataEntity.FetchData(), test.FetchTestRequest(0).Query.Fetch)
 		}
 	}
 }
@@ -53,15 +53,15 @@ func TestSetDataAndFetchDataOfDataEntity(t *testing.T) {
 //Test SetDataByHTTPBody And FetchData Of DataEntity
 func TestSetDataByHTTPBodyAndFetchDataOfDataEntity(t *testing.T) {
 	for casestring, data := range testdata.TestQuery {
-		testingDataEntity.SetDataByHTTPBody(ioutil.NopCloser(strings.NewReader(data["Raw"].(string))))
-		res := data["Result"].(map[string]interface{})
+		testingDataEntity.SetDataByHTTPBody(ioutil.NopCloser(strings.NewReader(data.Raw)))
+		res := data.Result
 		for n, v := range res {
 			if !reflect.DeepEqual(testingDataEntity.Data[n], v) {
 				t.Errorf("%v :値が異なっています", casestring)
 			}
 		}
-		if testingDataEntity.FetchData() != data["Fetch"] {
-			t.Errorf("%v :出力が異なります %v != %v", casestring, testingDataEntity.FetchData(), data["Fetch"])
+		if testingDataEntity.FetchData() != data.Fetch {
+			t.Errorf("%v :出力が異なります %v != %v", casestring, testingDataEntity.FetchData(), data.Fetch)
 		}
 	}
 }

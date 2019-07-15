@@ -10,23 +10,36 @@ import (
 
 //HTTPTestData はHTTP系のテストデータをまとめたものです
 type HTTPTestData struct {
-	Request      map[string]Request
+	Request      map[string]*Request
 	RequestCase  []string
-	Response     map[string]Response
+	Response     map[string]*Response
 	ResponseCase []string
 }
 
-func (h *HTTPTestData) FetchTestRequest(i int) Request {
+func (h *HTTPTestData) FetchTestRequest(i int) *Request {
 	return h.Request[h.RequestCase[i]]
 }
-
-func (h *HTTPTestData) FetchTestResponse(i int) Request {
+func (h *HTTPTestData) GetRequestCount() int {
+	return len(h.RequestCase)
+}
+func (h *HTTPTestData) FetchTestResponse(i int) *Request {
 	return h.Request[h.RequestCase[i]]
+}
+func (h *HTTPTestData) GetResponseCount() int {
+	return len(h.ResponseCase)
+}
+func NewHTTPTestData() HTTPTestData {
+	return HTTPTestData{
+		Request:      TestRequests,
+		RequestCase:  TestCaseSlice,
+		Response:     TestResponses,
+		ResponseCase: TestCaseSlice,
+	}
 }
 
 //Request は
 type Request struct {
-	HTTP   http.Request
+	HTTP   *http.Request
 	String string
 	header
 	Query query
@@ -44,7 +57,7 @@ type header struct {
 
 //Response は
 type Response struct {
-	HTTP   http.Response
+	HTTP   *http.Response
 	String string
 	header
 	Body body
@@ -68,12 +81,13 @@ var (
 		"Accept-Language": {"en-us"},
 		"Foo":             {"Bar", "two"},
 	}
+	TestHeaderKeys = []string{"Host", "Accept-Encoding", "Accept-Language", "Foo"}
 	TestFailHeader = http.Header{}
 	//TestHeaderSlice はHeaderの情報をstring sliceでまとめたもの
 	TestHeaderSlice  = []string{"Accept-Encoding: gzip, deflate", "Accept-Language: en-us", "Foo: Bar,two", "Host: loacalhost"}
 	Testheaderstruct = header{TestHeader, TestHeaderSlice}
 
-	TestCaseSlice = []string{"FORM_success", "FORM_ADD_success", "JSON_success", "JSON_fail"}
+	TestCaseSlice = []string{"FORM_success", "FORM_ADD_success", "JSON_success", "JSON_fail", "GET", "GET_Query"}
 	//TestQuery はFORM形式とJSON形式のクエリ
 	TestQuery = map[string]query{
 		TestCaseSlice[0]: {
@@ -100,36 +114,61 @@ var (
 			Result: map[string]interface{}{},
 			Fetch:  `{}`,
 		},
+		TestCaseSlice[4]: {
+			Raw:    ``,
+			Keys:   []string{},
+			Result: map[string]interface{}{},
+			Fetch:  ``,
+		},
+		TestCaseSlice[5]: {
+			Raw:    `input=usa`,
+			Keys:   []string{},
+			Result: map[string]interface{}{},
+			Fetch:  `input=usa`,
+		},
 	}
-
-	TestRequests = map[string]Request{
+	TestRequests = map[string]*Request{
 		TestCaseSlice[0]: {
-			HTTP: http.Request{Method: "POST", URL: TestURLPackageURL, Proto: "HTTP/1.0", ProtoMajor: 1, ProtoMinor: 0, Header: TestHeader,
+			HTTP: &http.Request{Method: "POST", URL: TestURLPackageURL, Proto: "HTTP/1.0", ProtoMajor: 1, ProtoMinor: 0, Header: TestHeader,
 				Body: ioutil.NopCloser(strings.NewReader(TestQuery[TestCaseSlice[0]].Raw)), ContentLength: int64(len(TestQuery[TestCaseSlice[0]].Raw)), Host: host},
-			String: "POST /testing/  HTTP/1.0\n" + strings.Join(TestHeaderSlice, "\n") + "\n\n" + TestQuery[TestCaseSlice[0]].Raw,
+			String: "POST /testing/ HTTP/1.0\n" + strings.Join(TestHeaderSlice, "\n") + "\n\n" + TestQuery[TestCaseSlice[0]].Raw,
 			header: Testheaderstruct,
 			Query:  TestQuery[TestCaseSlice[0]],
 		},
 		TestCaseSlice[1]: {
-			HTTP: http.Request{Method: "POST", URL: TestURLPackageURL, Proto: "HTTP/1.0", ProtoMajor: 1, ProtoMinor: 0, Header: TestHeader,
+			HTTP: &http.Request{Method: "POST", URL: TestURLPackageURL, Proto: "HTTP/1.0", ProtoMajor: 1, ProtoMinor: 0, Header: TestHeader,
 				Body: ioutil.NopCloser(strings.NewReader(TestQuery[TestCaseSlice[1]].Raw)), ContentLength: int64(len(TestQuery[TestCaseSlice[1]].Raw)), Host: host},
-			String: "POST /testing/  HTTP/1.0\n" + strings.Join(TestHeaderSlice, "\n") + "\n\n" + TestQuery[TestCaseSlice[1]].Raw,
+			String: "POST /testing/ HTTP/1.0\n" + strings.Join(TestHeaderSlice, "\n") + "\n\n" + TestQuery[TestCaseSlice[1]].Raw,
 			header: Testheaderstruct,
 			Query:  TestQuery[TestCaseSlice[1]],
 		},
 		TestCaseSlice[2]: {
-			HTTP: http.Request{Method: "POST", URL: TestURLPackageURL, Proto: "HTTP/1.0", ProtoMajor: 1, ProtoMinor: 0, Header: TestHeader,
+			HTTP: &http.Request{Method: "POST", URL: TestURLPackageURL, Proto: "HTTP/1.0", ProtoMajor: 1, ProtoMinor: 0, Header: TestHeader,
 				Body: ioutil.NopCloser(strings.NewReader(TestQuery[TestCaseSlice[2]].Raw)), ContentLength: int64(len(TestQuery[TestCaseSlice[2]].Raw)), Host: host},
-			String: "POST /testing/  HTTP/1.0\n" + strings.Join(TestHeaderSlice, "\n") + "\n\n" + TestQuery[TestCaseSlice[2]].Raw,
+			String: "POST /testing/ HTTP/1.0\n" + strings.Join(TestHeaderSlice, "\n") + "\n\n" + TestQuery[TestCaseSlice[2]].Raw,
 			header: Testheaderstruct,
 			Query:  TestQuery[TestCaseSlice[2]],
 		},
 		TestCaseSlice[3]: {
-			HTTP: http.Request{Method: "POST", URL: TestURLPackageURL, Proto: "HTTP/1.0", ProtoMajor: 1, ProtoMinor: 0, Header: TestHeader,
+			HTTP: &http.Request{Method: "POST", URL: TestURLPackageURL, Proto: "HTTP/1.0", ProtoMajor: 1, ProtoMinor: 0, Header: TestHeader,
 				Body: ioutil.NopCloser(strings.NewReader(TestQuery[TestCaseSlice[3]].Raw)), ContentLength: int64(len(TestQuery[TestCaseSlice[3]].Raw)), Host: host},
-			String: "POST /testing/  HTTP/1.0\n" + strings.Join(TestHeaderSlice, "\n") + "\n\n" + TestQuery[TestCaseSlice[3]].Raw,
+			String: "POST /testing/ HTTP/1.0\n" + strings.Join(TestHeaderSlice, "\n") + "\n\n" + TestQuery[TestCaseSlice[3]].Raw,
 			header: Testheaderstruct,
 			Query:  TestQuery[TestCaseSlice[3]],
+		},
+		TestCaseSlice[4]: {
+			HTTP: &http.Request{Method: "GET", URL: TestURLPackageURL, Proto: "HTTP/1.0", ProtoMajor: 1, ProtoMinor: 0, Header: TestHeader,
+				Body: ioutil.NopCloser(strings.NewReader(TestQuery[TestCaseSlice[4]].Raw)), ContentLength: int64(len(TestQuery[TestCaseSlice[4]].Raw)), Host: host},
+			String: "GET /testing/ HTTP/1.0\n" + strings.Join(TestHeaderSlice, "\n") + "\n\n" + TestQuery[TestCaseSlice[4]].Raw,
+			header: Testheaderstruct,
+			Query:  TestQuery[TestCaseSlice[4]],
+		},
+		TestCaseSlice[5]: {
+			HTTP: &http.Request{Method: "GET", URL: TestURLPackageURLPlusQuery, Proto: "HTTP/1.0", ProtoMajor: 1, ProtoMinor: 0, Header: TestHeader,
+				Body: ioutil.NopCloser(strings.NewReader(TestQuery[TestCaseSlice[5]].Raw)), ContentLength: int64(len(TestQuery[TestCaseSlice[5]].Raw)), Host: host},
+			String: "GET /testing/?input=usa HTTP/1.0\n" + strings.Join(TestHeaderSlice, "\n") + "\n\n" + TestQuery[TestCaseSlice[5]].Raw,
+			header: Testheaderstruct,
+			Query:  TestQuery[TestCaseSlice[5]],
 		},
 	}
 
@@ -173,13 +212,21 @@ var (
 			Raw: TestHTML,
 			IO:  ioutil.NopCloser(strings.NewReader(TestHTML)),
 		},
+		TestCaseSlice[4]: {
+			Raw: TestHTML,
+			IO:  ioutil.NopCloser(strings.NewReader(TestHTML)),
+		},
+		TestCaseSlice[5]: {
+			Raw: TestHTML,
+			IO:  ioutil.NopCloser(strings.NewReader(TestHTML)),
+		},
 	}
-	testHTTPSetFunc = func(casestr string) http.Response {
+	testHTTPSetFunc = func(casestr string) *http.Response {
 		TestResponse.Body = TestBodys[casestr].IO
 		TestResponse.ContentLength = int64(len(TestBodys[casestr].Raw))
-		return TestResponse
+		return &TestResponse
 	}
-	TestResponses = map[string]Response{
+	TestResponses = map[string]*Response{
 		TestCaseSlice[0]: {
 			HTTP:   testHTTPSetFunc(TestCaseSlice[0]),
 			String: TestResponse.Proto + " " + TestResponse.Status + "\n" + strings.Join(TestHeaderSlice, "\n") + "\n\n" + TestBodys[TestCaseSlice[0]].Raw,
@@ -203,6 +250,18 @@ var (
 			String: TestResponse.Proto + " " + TestResponse.Status + "\n" + strings.Join(TestHeaderSlice, "\n") + "\n\n" + TestBodys[TestCaseSlice[3]].Raw,
 			header: Testheaderstruct,
 			Body:   TestBodys[TestCaseSlice[3]],
+		},
+		TestCaseSlice[4]: {
+			HTTP:   testHTTPSetFunc(TestCaseSlice[4]),
+			String: TestResponse.Proto + " " + TestResponse.Status + "\n" + strings.Join(TestHeaderSlice, "\n") + "\n\n" + TestBodys[TestCaseSlice[4]].Raw,
+			header: Testheaderstruct,
+			Body:   TestBodys[TestCaseSlice[4]],
+		},
+		TestCaseSlice[5]: {
+			HTTP:   testHTTPSetFunc(TestCaseSlice[5]),
+			String: TestResponse.Proto + " " + TestResponse.Status + "\n" + strings.Join(TestHeaderSlice, "\n") + "\n\n" + TestBodys[TestCaseSlice[5]].Raw,
+			header: Testheaderstruct,
+			Body:   TestBodys[TestCaseSlice[5]],
 		},
 	}
 )
