@@ -36,3 +36,14 @@ func (ri *RequestInfo) GetStatusLine() string {
 	}
 	return strings.Join(statusline, " ")
 }
+
+func (ri *RequestInfo) SetStatusLine(startline string) {
+	sline := strings.Split(startline, " ")
+	pathandquery := strings.Split(sline[1], "?")
+	ri.Method = sline[0]
+	ri.Proto = sline[2]
+	ri.Path = pathandquery[0]
+	if len(pathandquery) == 2 && len(pathandquery[1]) > 0 {
+		ri.Query.SetData(pathandquery[1])
+	}
+}
