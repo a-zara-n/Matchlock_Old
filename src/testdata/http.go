@@ -130,28 +130,28 @@ var (
 	TestRequests = map[string]*Request{
 		TestCaseSlice[0]: {
 			HTTP: &http.Request{Method: "POST", URL: TestURLPackageURL, Proto: "HTTP/1.0", ProtoMajor: 1, ProtoMinor: 0, Header: TestHeader,
-				Body: ioutil.NopCloser(strings.NewReader(TestQuery[TestCaseSlice[0]].Raw)), ContentLength: int64(len(TestQuery[TestCaseSlice[0]].Raw)), Host: host},
+				Body: ioutil.NopCloser(strings.NewReader(TestQuery[TestCaseSlice[0]].Raw)), ContentLength: int64(len(TestQuery[TestCaseSlice[0]].Fetch)), Host: host},
 			String: "POST /testing/ HTTP/1.0\n" + strings.Join(TestHeaderSlice, "\n") + "\n\n" + TestQuery[TestCaseSlice[0]].Raw,
 			header: Testheaderstruct,
 			Query:  TestQuery[TestCaseSlice[0]],
 		},
 		TestCaseSlice[1]: {
 			HTTP: &http.Request{Method: "POST", URL: TestURLPackageURL, Proto: "HTTP/1.0", ProtoMajor: 1, ProtoMinor: 0, Header: TestHeader,
-				Body: ioutil.NopCloser(strings.NewReader(TestQuery[TestCaseSlice[1]].Raw)), ContentLength: int64(len(TestQuery[TestCaseSlice[1]].Raw)), Host: host},
+				Body: ioutil.NopCloser(strings.NewReader(TestQuery[TestCaseSlice[1]].Raw)), ContentLength: int64(len(TestQuery[TestCaseSlice[1]].Fetch)), Host: host},
 			String: "POST /testing/ HTTP/1.0\n" + strings.Join(TestHeaderSlice, "\n") + "\n\n" + TestQuery[TestCaseSlice[1]].Raw,
 			header: Testheaderstruct,
 			Query:  TestQuery[TestCaseSlice[1]],
 		},
 		TestCaseSlice[2]: {
 			HTTP: &http.Request{Method: "POST", URL: TestURLPackageURL, Proto: "HTTP/1.0", ProtoMajor: 1, ProtoMinor: 0, Header: TestHeader,
-				Body: ioutil.NopCloser(strings.NewReader(TestQuery[TestCaseSlice[2]].Raw)), ContentLength: int64(len(TestQuery[TestCaseSlice[2]].Raw)), Host: host},
+				Body: ioutil.NopCloser(strings.NewReader(TestQuery[TestCaseSlice[2]].Raw)), ContentLength: int64(len(TestQuery[TestCaseSlice[2]].Fetch)), Host: host},
 			String: "POST /testing/ HTTP/1.0\n" + strings.Join(TestHeaderSlice, "\n") + "\n\n" + TestQuery[TestCaseSlice[2]].Raw,
 			header: Testheaderstruct,
 			Query:  TestQuery[TestCaseSlice[2]],
 		},
 		TestCaseSlice[3]: {
 			HTTP: &http.Request{Method: "POST", URL: TestURLPackageURL, Proto: "HTTP/1.0", ProtoMajor: 1, ProtoMinor: 0, Header: TestHeader,
-				Body: ioutil.NopCloser(strings.NewReader(TestQuery[TestCaseSlice[3]].Raw)), ContentLength: int64(len(TestQuery[TestCaseSlice[3]].Raw)), Host: host},
+				Body: ioutil.NopCloser(strings.NewReader(TestQuery[TestCaseSlice[3]].Raw)), ContentLength: int64(len(TestQuery[TestCaseSlice[3]].Fetch)), Host: host},
 			String: "POST /testing/ HTTP/1.0\n" + strings.Join(TestHeaderSlice, "\n") + "\n\n" + TestQuery[TestCaseSlice[3]].Raw,
 			header: Testheaderstruct,
 			Query:  TestQuery[TestCaseSlice[3]],
