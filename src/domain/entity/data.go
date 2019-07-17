@@ -63,6 +63,10 @@ func (d *Data) SetDataByHTTPBody(body io.ReadCloser) io.ReadCloser {
 	return ioutil.NopCloser(strings.NewReader(data))
 }
 
+func (d *Data) GetIoReadCloser() io.ReadCloser {
+	return ioutil.NopCloser(strings.NewReader(d.FetchData()))
+}
+
 //SetData はDataエンティティにDataを設定するためのmethod
 func (d *Data) SetData(rawdata string) {
 	if rawdata != "" {
