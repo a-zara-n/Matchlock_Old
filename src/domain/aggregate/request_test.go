@@ -10,13 +10,12 @@ import (
 	"github.com/a-zara-n/Matchlock/src/testdata"
 )
 
-var testrequestuest = &Request{
-	Info:   &entity.RequestInfo{},
-	Header: &entity.HTTPHeader{},
-	Data:   &entity.Data{},
-}
-
 func TestSetHTTPRequestByRequest(t *testing.T) {
+	testrequestuest := &Request{
+		Info:   &entity.RequestInfo{},
+		Header: &entity.HTTPHeader{},
+		Data:   &entity.Data{},
+	}
 	for i := 0; i < test.GetRequestCount(); i++ {
 		testingdata := test.FetchTestRequest(i)
 		testrequestuest.SetHTTPRequestByRequest(testingdata.HTTP)
@@ -34,6 +33,11 @@ func TestSetHTTPRequestByRequest(t *testing.T) {
 }
 
 func TestSetHTTPRequestByString(t *testing.T) {
+	testrequestuest := &Request{
+		Info:   &entity.RequestInfo{},
+		Header: &entity.HTTPHeader{},
+		Data:   &entity.Data{},
+	}
 	for i := 0; i < test.GetRequestCount(); i++ {
 		testingdata := test.FetchTestRequest(i)
 		testrequestuest.SetHTTPRequestByString(testingdata.String)
@@ -51,6 +55,11 @@ func TestSetHTTPRequestByString(t *testing.T) {
 }
 
 func TestGetHTTPRequestByRequest(t *testing.T) {
+	testrequestuest := &Request{
+		Info:   &entity.RequestInfo{},
+		Header: &entity.HTTPHeader{},
+		Data:   &entity.Data{},
+	}
 	for i := 0; i < test.GetRequestCount(); i++ {
 		testingdata := test.FetchTestRequest(i)
 		testrequestuest.SetHTTPRequestByRequest(testingdata.HTTP)
@@ -74,6 +83,11 @@ func TestGetHTTPRequestByRequest(t *testing.T) {
 }
 
 func TestGetHTTPRequestByString(t *testing.T) {
+	testrequestuest := &Request{
+		Info:   &entity.RequestInfo{},
+		Header: &entity.HTTPHeader{},
+		Data:   &entity.Data{},
+	}
 	for i := 0; i < test.GetRequestCount(); i++ {
 		testingdata := test.FetchTestRequest(i)
 		testrequestuest.SetHTTPRequestByRequest(testingdata.HTTP)
