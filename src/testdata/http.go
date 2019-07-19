@@ -224,6 +224,8 @@ var (
 	testHTTPSetFunc = func(casestr string) *http.Response {
 		TestResponse.Body = TestBodys[casestr].IO
 		TestResponse.ContentLength = int64(len(TestBodys[casestr].Raw))
+		TestResponse.Request = TestRequests[casestr].HTTP
+
 		return &TestResponse
 	}
 	TestResponses = map[string]*Response{
