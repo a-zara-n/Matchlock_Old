@@ -9,7 +9,7 @@ var testbody = &Body{}
 
 func TestBody(t *testing.T) {
 	for i := 0; i < test.GetResponseCount(); i++ {
-		testbody.Set(test.FetchTestResponse(i).Body.IO)
+		testbody.Set(test.FetchTestResponse(i).Body.IO, test.FetchTestResponse(i).HTTP.TransferEncoding)
 		if testbody.Body != test.FetchTestResponse(i).Body.Raw {
 			t.Error("適正に文字列化されておりません")
 		}
