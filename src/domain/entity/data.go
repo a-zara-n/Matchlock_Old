@@ -78,7 +78,7 @@ func (d *Data) SetData(rawdata string) {
 }
 
 //JSONであるかの検査時に利用する
-var typeJSONRegexp = regexp.MustCompile(`^{(\".*\":\"?.*\"?,?)+[^,]}$`)
+var typeJSONRegexp = regexp.MustCompile(`^{.*}$`)
 
 func checkDataType(rawdata string) (map[string]interface{}, string) {
 	if typeJSONRegexp.MatchString(rawdata) {
@@ -93,7 +93,6 @@ func parseJSON(rawdata string) map[string]interface{} {
 		log.Println("not JSON schema")
 		return map[string]interface{}{}
 	}
-
 	return data
 }
 
