@@ -90,7 +90,7 @@ func checkDataType(rawdata string) (map[string]interface{}, string) {
 func parseJSON(rawdata string) map[string]interface{} {
 	var data map[string]interface{}
 	if err := json.Unmarshal([]byte(rawdata), &data); err != nil {
-		log.Println("not JSON schema")
+		log.Printf("not JSON schema : %v", rawdata)
 		return map[string]interface{}{}
 	}
 	return data
