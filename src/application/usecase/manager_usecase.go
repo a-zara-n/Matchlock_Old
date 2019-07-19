@@ -32,19 +32,28 @@ func (m *managerUsecase) InternalCommunication() {
 	for {
 		select {
 		case req := <-m.channel.Proxy.Request:
+			httpmessage := aggregate.NewHTTPMessage()
+			httpmessage.SetRequest(req)
+			httpmessage.SetEditedRequest(req)
+			go m.MemoryRequest.Insert(httpmessage.Get(), false, httpmessage.Request)
 
 			if m.flag.Get() {
-				m.channel.Server.Request <- &aggregate.Request{}
-				<-m.channel.Server.Response
+				m.channel.Server.Request <- httpmessage.Request
+				httpmessage.EditRequest.DiffUpdate(<-m.channel.Server.Response)
 			}
+
 			client := &http.Client{Timeout: time.Duration(10) * time.Second}
-			req.RequestURI = ""
-			resp, _ := client.Do(req)
+			req.RequestURI = httpmessage.EditRequest.Info.URL.RequestURI()
+			resp, _ := client.Do(httpmessage.EditRequest.GetHTTPRequestByRequest())
+
+			httpmessage.SetResponse(resp)
+
 			m.channel.Proxy.Response <- resp
 
 			//保存methodを追加
-			if m.flag.Get() {
-
+			go m.MemoryResponse.Insert(httpmessage.Get(), httpmessage.Response)
+			if m.flag.Get() && httpmessage.IsEdited() {
+				go m.MemoryRequest.Insert(httpmessage.Get(), true, httpmessage.EditRequest)
 			}
 		}
 	}
