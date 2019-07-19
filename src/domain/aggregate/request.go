@@ -2,6 +2,7 @@ package aggregate
 
 import (
 	"net/http"
+	"reflect"
 	"strconv"
 	"strings"
 
@@ -24,6 +25,19 @@ func NewHTTPRequestByRequest(request *http.Request) *Request {
 	}
 	requestuest.SetHTTPRequestByRequest(request)
 	return requestuest
+}
+
+//DiffUpdate はaggrigateリクエスの差分を反映させます
+func (req *Request) DiffUpdate(request *Request) {
+	if !reflect.DeepEqual(req.Info, request.Info) {
+		req.Info = request.Info
+	}
+	if !reflect.DeepEqual(req.Header, request.Header) {
+		req.Header = request.Header
+	}
+	if !reflect.DeepEqual(req.Data, request.Data) {
+		req.Data = request.Data
+	}
 }
 
 //SetHTTPRequestByRequest はhttp.Requestを元に設定をします

@@ -99,3 +99,26 @@ func TestGetHTTPRequestByString(t *testing.T) {
 		}
 	}
 }
+
+func TestDiffUpdate(t *testing.T) {
+	for i := 0; i < test.GetRequestCount(); i++ {
+		testrequestuest := &Request{
+			Info:   &entity.RequestInfo{},
+			Header: &entity.HTTPHeader{},
+			Data:   &entity.Data{},
+		}
+		testrequestuestdiff := &Request{
+			Info:   &entity.RequestInfo{},
+			Header: &entity.HTTPHeader{},
+			Data:   &entity.Data{},
+		}
+		testingdata := test.FetchTestRequest(i)
+		testingediteddata := test.FetchTestRequest((test.GetRequestCount() + i + 1) % test.GetRequestCount())
+		testrequestuest.SetHTTPRequestByRequest(testingdata.HTTP)
+		testrequestuestdiff.SetHTTPRequestByRequest(testingediteddata.HTTP)
+		testrequestuest.DiffUpdate(testrequestuestdiff)
+		if testrequestuest.GetHTTPRequestByString() != testingediteddata.String {
+			t.Error("目的とした返り値と異なります")
+		}
+	}
+}
