@@ -11,5 +11,9 @@ func TestResponseInfo(t *testing.T) {
 		if testrequestinfo.Proto != testresp.Proto || testrequestinfo.Status != testresp.Status {
 			t.Error("適正な代入が行われていません")
 		}
+		fetch := testrequestinfo.Fetch()
+		if fetch.Proto != testresp.Proto || fetch.Status != testresp.Status {
+			t.Error("適正な出力処理が行われていません")
+		}
 	}
 }

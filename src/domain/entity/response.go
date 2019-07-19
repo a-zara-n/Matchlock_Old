@@ -18,3 +18,14 @@ func (r *ResponseInfo) Set(resp *http.Response) {
 	r.ProtoMajor = resp.ProtoMajor
 	r.ProtoMinor = resp.ProtoMinor
 }
+
+//Fetch は
+func (r *ResponseInfo) Fetch() *http.Response {
+	return &http.Response{
+		Status:     r.Status,
+		StatusCode: r.StatusCode,
+		Proto:      r.Proto,
+		ProtoMajor: r.ProtoMajor,
+		ProtoMinor: r.ProtoMinor,
+	}
+}
