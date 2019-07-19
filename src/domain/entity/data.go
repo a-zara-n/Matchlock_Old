@@ -63,6 +63,10 @@ func (d *Data) SetDataByHTTPBody(body io.ReadCloser) io.ReadCloser {
 	return ioutil.NopCloser(strings.NewReader(data))
 }
 
+func (d *Data) GetIoReadCloser() io.ReadCloser {
+	return ioutil.NopCloser(strings.NewReader(d.FetchData()))
+}
+
 //SetData はDataエンティティにDataを設定するためのmethod
 func (d *Data) SetData(rawdata string) {
 	if rawdata != "" {
@@ -74,7 +78,7 @@ func (d *Data) SetData(rawdata string) {
 }
 
 //JSONであるかの検査時に利用する
-var typeJSONRegexp = regexp.MustCompile(`^{(\".*\":\"?.*\"?,?)+[^,]}$`)
+var typeJSONRegexp = regexp.MustCompile(`^{.*}$`)
 
 func checkDataType(rawdata string) (map[string]interface{}, string) {
 	if typeJSONRegexp.MatchString(rawdata) {
@@ -86,10 +90,9 @@ func checkDataType(rawdata string) (map[string]interface{}, string) {
 func parseJSON(rawdata string) map[string]interface{} {
 	var data map[string]interface{}
 	if err := json.Unmarshal([]byte(rawdata), &data); err != nil {
-		log.Println("not JSON schema")
+		log.Printf("not JSON schema : %v", rawdata)
 		return map[string]interface{}{}
 	}
-
 	return data
 }
 

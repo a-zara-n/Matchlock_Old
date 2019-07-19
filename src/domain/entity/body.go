@@ -10,17 +10,18 @@ import (
 //Body は
 type Body struct {
 	Body       string
-	Encodetype string
+	Encodetype []string
 	Length     int64
 }
 
-func (b *Body) Set(body io.ReadCloser) io.ReadCloser {
+func (b *Body) Set(body io.ReadCloser, encode []string) io.ReadCloser {
 	bufbody := new(bytes.Buffer)
 	bufbody.ReadFrom(body)
 	bodystring := bufbody.String()
 	if bodystring != "" {
 		b.Body = bodystring
 		b.Length = int64(len(bodystring))
+		b.Encodetype = encode
 	}
 	return ioutil.NopCloser(strings.NewReader(bodystring))
 }

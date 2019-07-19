@@ -23,13 +23,13 @@ const (
 	letterIdxMax  = 63 / letterIdxBits
 )
 
-//GetIdentifi は設定されている識別子を取り出します
-func (ident *Identifier) GetIdentifi() string {
+//Get は設定されている識別子を取り出します
+func (ident *Identifier) Get() string {
 	return ident.Value
 }
 
-//SetIdentifi は引数を元に識別子を設定します
-func (ident *Identifier) SetIdentifi(str string) {
+//Set は引数を元に識別子を設定します
+func (ident *Identifier) Set(str string) {
 	str += randomString(5)
 	h := sha1.New()
 	h.Write([]byte(str))
