@@ -1,13 +1,14 @@
 package aggregate
 
 import (
+	"net/http"
 	"reflect"
 
 	"github.com/a-zara-n/Matchlock/src/domain/value"
 )
 
-//HTTPPair はHTTPリクエストとレスポンスをまとめたものになります
-type HTTPPair struct {
+//HTTPMessages はHTTPリクエストとレスポンスをまとめたものになります
+type HTTPMessages struct {
 	value.Identifier
 	IsEdit      bool
 	Request     *Request
@@ -35,12 +36,42 @@ type HTTPDataDefinitionByJSON struct {
 }
 
 //IsEdited はリクエストが編集されたかを確認するためのmethod
-func (h *HTTPPair) IsEdited() bool {
-	if h.Request.Data.FetchData() != h.EditRequest.Data.FetchData() {
-		return true
-	}
-	if !reflect.DeepEqual(h.Request.Header.Header, h.EditRequest.Header.Header) {
+func (h *HTTPMessages) IsEdited() bool {
+	if !reflect.DeepEqual(h.Request, h.EditRequest) {
+		h.IsEdit = true
 		return true
 	}
 	return false
+}
+
+//SetRequest は
+func (h *HTTPMessages) SetRequest(req *http.Request) {
+	h.Identifier.Set(req.URL.String())
+	h.Request = NewHTTPRequestByRequest(req)
+}
+
+//SetEditedRequest は
+func (h *HTTPMessages) SetEditedRequest(req *http.Request) {
+	h.EditRequest = NewHTTPRequestByRequest(req)
+}
+
+//SetResponse は
+func (h *HTTPMessages) SetResponse(resp *http.Response) {
+	h.Response = NewHTTPResponseByResponse(resp)
+}
+
+//FetchRequest は
+func (h *HTTPMessages) FetchRequest() *http.Request {
+	return h.Request.GetHTTPRequestByRequest()
+}
+
+//FetchEditRequest は
+func (h *HTTPMessages) FetchEditRequest() *http.Request {
+	return h.EditRequest.GetHTTPRequestByRequest()
+}
+
+//FetchResponse は
+func (h *HTTPMessages) FetchResponse() *http.Response {
+	return h.Response.GetHTTPRequestByResponse()
+
 }
