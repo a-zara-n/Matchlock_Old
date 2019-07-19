@@ -35,6 +35,17 @@ type HTTPDataDefinitionByJSON struct {
 	Body               string `json:"ReqBody"`
 }
 
+//NewHTTPMessage は新規でHTTPMessageを生成します
+func NewHTTPMessage() HTTPMessages {
+	return HTTPMessages{
+		Identifier:  value.Identifier{},
+		IsEdit:      false,
+		Request:     &Request{},
+		EditRequest: &Request{},
+		Response:    &Response{},
+	}
+}
+
 //IsEdited はリクエストが編集されたかを確認するためのmethod
 func (h *HTTPMessages) IsEdited() bool {
 	if !reflect.DeepEqual(h.Request, h.EditRequest) {
