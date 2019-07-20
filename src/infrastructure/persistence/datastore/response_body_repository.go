@@ -1,6 +1,8 @@
 package datastore
 
 import (
+	"strings"
+
 	"github.com/a-zara-n/Matchlock/src/domain/entity"
 	"github.com/a-zara-n/Matchlock/src/domain/repository"
 	"github.com/jinzhu/gorm"
@@ -32,7 +34,7 @@ func (r *ResponseBodyRepositry) Insert(Identifier string, e *entity.Body) bool {
 	insertData := &ResponseBody{
 		Identifier: Identifier,
 		Body:       e.Body,
-		Encodetype: e.Encodetype,
+		Encodetype: strings.Join(e.Encodetype, ","),
 		Length:     e.Length,
 	}
 	r.DB.Create(insertData)
@@ -45,7 +47,7 @@ func (r *ResponseBodyRepositry) Select(Identifier string) *entity.Body {
 	r.DB.Where("Identifier = ?", Identifier).Find(rets)
 	retentity := &entity.Body{
 		Body:       rets[0].Body,
-		Encodetype: rets[0].Encodetype,
+		Encodetype: strings.Split(rets[0].Encodetype, ","),
 		Length:     rets[0].Length,
 	}
 	return retentity

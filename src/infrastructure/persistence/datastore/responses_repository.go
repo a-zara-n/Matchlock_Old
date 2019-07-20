@@ -38,9 +38,9 @@ func NewResponseRepositry(db *gorm.DB) repository.ResponseRepositry {
 
 //Insert はResponseを保存します
 func (r *ResponseRepositry) Insert(Identifier string, a *aggregate.Response) bool {
-	go r.insert(Identifier, &a.Info)
-	go r.Header.Insert(Identifier, &a.Header)
-	go r.Body.Insert(Identifier, &a.Body)
+	go r.insert(Identifier, a.Info)
+	go r.Header.Insert(Identifier, a.Header)
+	go r.Body.Insert(Identifier, a.Body)
 	return true
 }
 
@@ -61,9 +61,9 @@ func (r *ResponseRepositry) insert(Identifier string, e *entity.ResponseInfo) bo
 //GetRequest はaggregate.Responseを取得します
 func (r *ResponseRepositry) GetRequest(Identifier string) *aggregate.Response {
 	retentity := &aggregate.Response{
-		Info:   *r.Select(Identifier),
-		Header: *r.Header.Select(Identifier),
-		Body:   *r.Body.Select(Identifier),
+		Info:   r.Select(Identifier),
+		Header: r.Header.Select(Identifier),
+		Body:   r.Body.Select(Identifier),
 	}
 	return retentity
 }
