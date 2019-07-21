@@ -1,7 +1,7 @@
 package aggregate
 
 import (
-	"fmt"
+	"log"
 	"net/http"
 	"reflect"
 
@@ -56,7 +56,7 @@ func (h *HTTPMessages) IsEdited() bool {
 		}
 	}
 	if flag || !reflect.DeepEqual(h.Request.Info, h.EditRequest.Info) || !reflect.DeepEqual(h.Request.Data, h.EditRequest.Data) {
-		fmt.Println("変更が発生しました")
+		log.Println("変更が発生しました")
 		h.IsEdit = true
 		return true
 	}

@@ -29,7 +29,10 @@ func (ri *RequestInfo) SetRequestINFO(r *http.Request) {
 	}
 }
 
-func (ri *RequestInfo) GetStatusLine() string {
+func (ri *RequestInfo) GetStatusLine(query ...string) string {
+	if len(query) > 0 {
+		ri.Query.SetData(query[0])
+	}
 	statusline := []string{ri.Method, ri.Path, ri.Proto}
 	if len(ri.Query.GetKeys()) != 0 {
 		statusline[1] += "?" + ri.Query.FetchData()
