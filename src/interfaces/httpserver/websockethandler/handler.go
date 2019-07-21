@@ -70,23 +70,21 @@ func (ws *webSocketHandler) ServeHTTP(cont echo.Context) error {
 	return nil
 }
 
-/*
-TODO :
-WebSocketとProxy_logicのミドルウェアをmiddlewareで作成する
-*/
 func (ws *webSocketHandler) Run() {
 	for {
 		select {
 		case client := <-ws.join:
 			//参加
+			log.Println("正常にアクセスしました")
 			ws.clients[client] = true
 		case client := <-ws.leave:
 			//退室
 			delete(ws.clients, client)
 			close(client.send)
 		case msg := <-ws.forward:
-			ws.channel.Response <- ws.usecase.GetHTTPRequestByRequest(msg.Data)
+			ws.channel.Response <- msg.Data
 		case r := <-ws.channel.Request:
+			log.Println("リクエストを受信しました")
 			mes := WebSocketRequest{Type: "Request", Data: ws.usecase.GetHTTPRequestByString(r)}
 			for client := range ws.clients {
 				select {
