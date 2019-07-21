@@ -74,6 +74,8 @@ func (d *Data) SetData(rawdata string) {
 		d.Keys = getKeys(d.Data)
 		return
 	}
+	d.Data = map[string]interface{}{}
+	d.Keys = []string{}
 	d.Type = "FORM"
 }
 
