@@ -15,7 +15,7 @@ type Usecase interface {
 	NewAPIUsecase(f *value.Forward, memreq repository.RequestRepositry, memres repository.ResponseRepositry) *usecase.APIUsecase
 	NewCommandUsecase() usecase.CommandUsecase
 	NewWebSocketUsecase(memreq repository.RequestRepositry, memres repository.ResponseRepositry) usecase.WebSocketUsecase
-	NewManagerUsecase(channel *config.Channel, memreq repository.RequestRepositry, memres repository.ResponseRepositry, f *value.Forward) usecase.ManagerUsecase
+	NewManagerUsecase(channel config.Channel, memreq repository.RequestRepositry, memres repository.ResponseRepositry, f *value.Forward) usecase.ManagerUsecase
 }
 
 //NewLogic はusecase.ProxyLogicを取得
@@ -42,6 +42,6 @@ func (r *registry) NewWebSocketUsecase(memreq repository.RequestRepositry, memre
 }
 
 //NewManagerUsecase は管理を行うためのManagerUsecaseを取得します
-func (r *registry) NewManagerUsecase(channel *config.Channel, memreq repository.RequestRepositry, memres repository.ResponseRepositry, f *value.Forward) usecase.ManagerUsecase {
+func (r *registry) NewManagerUsecase(channel config.Channel, memreq repository.RequestRepositry, memres repository.ResponseRepositry, f *value.Forward) usecase.ManagerUsecase {
 	return usecase.NewManagerUsecase(channel, memreq, memres, f)
 }

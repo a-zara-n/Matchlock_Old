@@ -40,8 +40,9 @@ func NewRegistry() Registry {
 		dbconf  = registry.NewDatabaseConfig()
 		db      = dbconf.OpenDB(dbconf.GetConnect())
 		channel = registry.NewMatchlockChannel()
-		//Entity
-		forward = registry.NewForward()
+		//Domain
+		forward   = registry.NewForward()
+		whitelist = registry.NewWhiteList()
 		//Repository
 		reqrepo = registry.NewRequestRepositry(db)
 		resrepo = registry.NewResponseRepositry(db)
@@ -49,12 +50,13 @@ func NewRegistry() Registry {
 		html      = registry.NewHTMLUseCase()
 		api       = registry.NewAPIUsecase(forward, reqrepo, resrepo)
 		websocket = registry.NewWebSocketUsecase(reqrepo, resrepo)
-		manager   = registry.NewManagerUsecase(&channel, reqrepo, resrepo, forward)
+		manager   = registry.NewManagerUsecase(channel, reqrepo, resrepo, forward)
 	)
+	whitelist.Add(`^[0-9a-zA-Z]*\.?(localhost)(\.+[0-9a-zA-Z]+)*$`)
 	//Interface
 	registry.initDBschema(db)
 	registry.Channel = channel
-	registry.Proxy = registry.NewProxy(registry.NewLogic(registry.NewWhiteList(), channel.Proxy))
+	registry.Proxy = registry.NewProxy(registry.NewLogic(whitelist, channel.Proxy))
 	registry.HTTP = registry.NewHTTPServer(channel.Server, html, api, websocket, manager)
 	registry.Command = registry.NewCommand()
 	return registry
@@ -82,12 +84,12 @@ func sigClose(m config.Channel) {
 
 func (r *registry) initDBschema(db *gorm.DB) {
 	dbschema := []interface{}{
-		datastore.Request{},
-		datastore.RequestData{},
-		datastore.RequestHeader{},
-		datastore.Response{},
-		datastore.ResponseBody{},
-		datastore.ResponseHeader{},
+		datastore.RequestInfoSchema{},
+		datastore.RequestDataSchema{},
+		datastore.RequestHeaderSchema{},
+		datastore.ResponseInfoSchema{},
+		datastore.ResponseBodySchema{},
+		datastore.ResponseHeaderSchema{},
 	}
 	for _, tablecshema := range dbschema {
 		db.AutoMigrate(tablecshema)

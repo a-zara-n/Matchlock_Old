@@ -12,8 +12,8 @@ type Repository interface {
 }
 
 func (r *registry) NewRequestRepositry(db *gorm.DB) repository.RequestRepositry {
-	return datastore.NewRequestRepositry(db)
+	return datastore.NewRequest(db)
 }
 func (r *registry) NewResponseRepositry(db *gorm.DB) repository.ResponseRepositry {
-	return datastore.NewResponseRepositry(db)
+	return datastore.NewResponse(db)
 }
