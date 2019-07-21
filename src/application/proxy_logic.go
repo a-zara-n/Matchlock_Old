@@ -1,6 +1,7 @@
 package application
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/a-zara-n/Matchlock/src/config"
@@ -26,6 +27,7 @@ func NewLogic(white *entity.WhiteList, channel *config.ProxyChannel) ProxyLogic 
 
 func (l *proxylogic) MatchlockLogic(r *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
 	if l.WhiteList.Check(r.Host) {
+		log.Println("ホワイトリストにマッチしました")
 		l.channel.Request <- r
 		resp := <-l.channel.Response
 		return nil, resp

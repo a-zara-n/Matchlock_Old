@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"log"
 	"net/http"
 	"time"
 
@@ -18,30 +19,34 @@ type ManagerUsecase interface {
 }
 
 type managerUsecase struct {
-	channel        *config.Channel
+	channel        config.Channel
 	MemoryRequest  repository.RequestRepositry
 	MemoryResponse repository.ResponseRepositry
 	flag           *value.Forward
 }
 
 //NewManagerUsecase はManagerUsecaseを返します
-func NewManagerUsecase(channel *config.Channel, repuestrepo repository.RequestRepositry, responserepo repository.ResponseRepositry, forward *value.Forward) ManagerUsecase {
+func NewManagerUsecase(channel config.Channel, repuestrepo repository.RequestRepositry, responserepo repository.ResponseRepositry, forward *value.Forward) ManagerUsecase {
+
 	return &managerUsecase{channel, repuestrepo, responserepo, forward}
 }
 func (m *managerUsecase) InternalCommunication() {
 	for {
 		select {
 		case req := <-m.channel.Proxy.Request:
+			log.Println("リクエストを受信しました")
 			httpmessage := aggregate.NewHTTPMessage()
 			httpmessage.SetRequest(req)
 			httpmessage.SetEditedRequest(req)
+			log.Println("リクエストを保存を開始します")
 			go m.MemoryRequest.Insert(httpmessage.Get(), false, httpmessage.Request)
 
 			if m.flag.Get() {
+				log.Println("forwardがONです")
 				m.channel.Server.Request <- httpmessage.Request
-				httpmessage.EditRequest.DiffUpdate(<-m.channel.Server.Response)
+				httpmessage.EditRequest.SetHTTPRequestByString(<-m.channel.Server.Response)
 			}
-
+			log.Println("クライアントを準備しています")
 			client := &http.Client{Timeout: time.Duration(10) * time.Second}
 			req.RequestURI = httpmessage.EditRequest.Info.URL.RequestURI()
 			resp, _ := client.Do(httpmessage.EditRequest.GetHTTPRequestByRequest())

@@ -30,7 +30,7 @@ func NewProxyChannel(c *CommonChannel) *ProxyChannel {
 //HTTPServerChannel はhttpserverとmanagerとの間で利用される非同期チャンネルです
 type HTTPServerChannel struct {
 	Request  chan *aggregate.Request
-	Response chan *aggregate.Request
+	Response chan string
 	Common   *CommonChannel
 }
 
@@ -38,7 +38,7 @@ type HTTPServerChannel struct {
 func NewHTTPServerChannel(c *CommonChannel) *HTTPServerChannel {
 	return &HTTPServerChannel{
 		Request:  make(chan *aggregate.Request, 10000),
-		Response: make(chan *aggregate.Request, 10000),
+		Response: make(chan string, 10000),
 		Common:   c,
 	}
 }

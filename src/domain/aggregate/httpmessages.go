@@ -1,6 +1,7 @@
 package aggregate
 
 import (
+	"log"
 	"net/http"
 	"reflect"
 
@@ -48,7 +49,14 @@ func NewHTTPMessage() HTTPMessages {
 
 //IsEdited はリクエストが編集されたかを確認するためのmethod
 func (h *HTTPMessages) IsEdited() bool {
-	if !reflect.DeepEqual(h.Request, h.EditRequest) {
+	var flag bool
+	for _, key := range h.EditRequest.Header.GetKeys() {
+		if h.Request.Header.Get(key) != h.EditRequest.Header.Header.Get(key) {
+			flag = true
+		}
+	}
+	if flag || !reflect.DeepEqual(h.Request.Info, h.EditRequest.Info) || !reflect.DeepEqual(h.Request.Data, h.EditRequest.Data) {
+		log.Println("変更が発生しました")
 		h.IsEdit = true
 		return true
 	}

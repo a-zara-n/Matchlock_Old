@@ -36,5 +36,7 @@ func (h *httpServer) Run() {
 	e.Logger.SetLevel(99)
 	e.Renderer = renders()
 	e = h.router(e)
+	go h.Middleware.Run()
+	go h.WebSocketHandler.Run()
 	e.Start(":8888")
 }

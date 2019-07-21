@@ -3,9 +3,11 @@ package config
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 
 	"github.com/go-yaml/yaml"
 	"github.com/jinzhu/gorm"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 //DatabaseConfig はDatabaseに利用する各種設定を管理するMethodを定義します
@@ -67,6 +69,7 @@ func (dbc *databaseConfig) GetConnect() string {
 func (dbc *databaseConfig) OpenDB(connect string) *gorm.DB {
 	db, err := gorm.Open(dbc.DBMS, connect)
 	if err != nil {
+		log.Fatalln(err)
 		panic("DB Bad connection!")
 	}
 	return db

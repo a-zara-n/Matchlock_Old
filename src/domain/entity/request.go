@@ -29,7 +29,10 @@ func (ri *RequestInfo) SetRequestINFO(r *http.Request) {
 	}
 }
 
-func (ri *RequestInfo) GetStatusLine() string {
+func (ri *RequestInfo) GetStatusLine(query ...string) string {
+	if len(query) > 0 {
+		ri.Query.SetData(query[0])
+	}
 	statusline := []string{ri.Method, ri.Path, ri.Proto}
 	if len(ri.Query.GetKeys()) != 0 {
 		statusline[1] += "?" + ri.Query.FetchData()
@@ -44,6 +47,7 @@ func (ri *RequestInfo) SetStatusLine(startline string) {
 	ri.Proto = sline[2]
 	ri.Path = pathandquery[0]
 	if len(pathandquery) == 2 && len(pathandquery[1]) > 0 {
+		ri.URL.RawQuery = pathandquery[1]
 		ri.Query.SetData(pathandquery[1])
 	}
 }

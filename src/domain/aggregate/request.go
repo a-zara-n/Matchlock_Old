@@ -44,11 +44,12 @@ func (req *Request) DiffUpdate(request *Request) {
 func (req *Request) SetHTTPRequestByRequest(request *http.Request) {
 	req.Info.SetRequestINFO(request)
 	req.Header.SetHTTPHeader(request.Header)
-	if request.Method == "POST" {
+	switch request.Method {
+	case "POST", "DELETE", "PUT":
 		request.Body = req.Data.SetDataByHTTPBody(request.Body)
-		return
+	default:
+		req.Data.SetData(request.URL.RawQuery)
 	}
-	req.Data.SetData(request.URL.RawQuery)
 }
 
 //SetHTTPRequestByString はstringを元に設定をします
@@ -56,7 +57,17 @@ func (req *Request) SetHTTPRequestByString(request string) {
 	slicehttprequest := strings.Split(request, "\n")
 	req.Info.SetStatusLine(slicehttprequest[0])
 	req.Header.SetStringHeader(strings.Join(slicehttprequest[1:len(slicehttprequest)-2], "\n"))
-	req.Data.SetData(slicehttprequest[len(slicehttprequest)-1])
+	switch strings.Split(slicehttprequest[0], " ")[0] {
+	case "POST", "DELETE", "PUT":
+		req.Data.SetData(slicehttprequest[len(slicehttprequest)-1])
+	default:
+		pathquery := strings.Split(slicehttprequest[0], " ")[1]
+		if query := strings.Split(pathquery, "?"); len(query) > 1 {
+			req.Data.SetData(query[1])
+		} else {
+			req.Data.SetData("")
+		}
+	}
 }
 
 //GetHTTPRequestByRequest はhttp.Requestを生成します
@@ -85,5 +96,12 @@ func (req *Request) GetHTTPRequestByRequest() *http.Request {
 
 //GetHTTPRequestByString は文字列のhttp requestを生成します
 func (req *Request) GetHTTPRequestByString() string {
-	return req.Info.GetStatusLine() + "\n" + req.Header.GetStringHeader() + "\n\n" + req.Data.FetchData()
+	var stringrequest string
+	switch req.Info.Method {
+	case "POST", "DELETE", "PUT":
+		stringrequest = req.Info.GetStatusLine() + "\n" + req.Header.GetStringHeader() + "\n\n" + req.Data.FetchData()
+	default:
+		stringrequest = req.Info.GetStatusLine(req.Data.FetchData()) + "\n" + req.Header.GetStringHeader() + "\n"
+	}
+	return stringrequest
 }
