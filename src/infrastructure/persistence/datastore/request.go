@@ -6,10 +6,10 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/a-zara-n/Matchlock/src/config"
 	"github.com/a-zara-n/Matchlock/src/domain/aggregate"
 	"github.com/a-zara-n/Matchlock/src/domain/entity"
 	"github.com/a-zara-n/Matchlock/src/domain/repository"
-	"github.com/jinzhu/gorm"
 )
 
 //Request は保存用のリポジトリを設定します
@@ -19,8 +19,8 @@ type Request struct {
 	Data   repository.RequestDataRepositry
 }
 
-func NewRequest(db *gorm.DB) repository.RequestRepositry {
-	return &Request{NewRequestInfo(db), NewRequestHeader(db), NewRequestData(db)}
+func NewRequest(dbconfig config.DatabaseConfig) repository.RequestRepositry {
+	return &Request{NewRequestInfo(dbconfig), NewRequestHeader(dbconfig), NewRequestData(dbconfig)}
 }
 
 func (req *Request) Insert(Identifier string, IsEdit bool, a *aggregate.Request) bool {
@@ -44,12 +44,14 @@ type RequestInfo struct {
 	historyCommon
 }
 
-func NewRequestInfo(db *gorm.DB) repository.RequestInfoRepositry {
-	return &RequestInfo{historyCommon{DB: db}}
+func NewRequestInfo(dbconfig config.DatabaseConfig) repository.RequestInfoRepositry {
+	return &RequestInfo{historyCommon{DBconfig: dbconfig}}
 }
 
 //Insert はRequestInfoを保存します
 func (r *RequestInfo) Insert(Identifier string, IsEdit bool, e *entity.RequestInfo) bool {
+	db := r.OpenDB()
+	defer db.Close()
 	insertRequestInfo := &RequestInfoSchema{
 		Identifier: Identifier,
 		IsEdit:     IsEdit,
@@ -59,14 +61,16 @@ func (r *RequestInfo) Insert(Identifier string, IsEdit bool, e *entity.RequestIn
 		Path:       e.Path,
 		Proto:      e.Proto,
 	}
-	r.DB.Create(insertRequestInfo)
+	db.Create(insertRequestInfo)
 	return true
 }
 
 //Fetch はRequest Infoを取得出来る
 func (r *RequestInfo) Fetch(Identifier string, IsEdit bool) *entity.RequestInfo {
 	rets := []*RequestInfoSchema{}
-	r.DB.Where("Identifier = ? AND IsEdit = ?", Identifier, IsEdit).Find(rets)
+	db := r.OpenDB()
+	defer db.Close()
+	db.Where("Identifier = ? AND IsEdit = ?", Identifier, IsEdit).Find(rets)
 	u, _ := url.Parse(rets[0].URL)
 	retentity := &entity.RequestInfo{
 		Host:   rets[0].Host,
@@ -84,13 +88,14 @@ type RequestHeader struct {
 }
 
 //NewRequestHeader はRequestHeaderを取得する
-func NewRequestHeader(db *gorm.DB) repository.RequestHeaderRepositry {
-	return &RequestHeader{historyCommon{DB: db}}
+func NewRequestHeader(dbconfig config.DatabaseConfig) repository.RequestHeaderRepositry {
+	return &RequestHeader{historyCommon{DBconfig: dbconfig}}
 }
 
 //Insert はHTTPHeaderを保存します
 func (r *RequestHeader) Insert(Identifier string, IsEdit bool, e *entity.HTTPHeader) bool {
-
+	db := r.OpenDB()
+	defer db.Close()
 	for _, key := range e.GetKeys() {
 		insertHeader := &RequestHeaderSchema{
 			Identifier: Identifier,
@@ -98,7 +103,7 @@ func (r *RequestHeader) Insert(Identifier string, IsEdit bool, e *entity.HTTPHea
 			Name:       key,
 			Value:      strings.Join(e.Header[key], ","),
 		}
-		r.DB.Create(insertHeader)
+		db.Create(insertHeader)
 	}
 	return true
 }
@@ -106,7 +111,9 @@ func (r *RequestHeader) Insert(Identifier string, IsEdit bool, e *entity.HTTPHea
 //Fetch はentity.HTTPHeaderを取得します
 func (r *RequestHeader) Fetch(Identifier string, IsEdit bool) *entity.HTTPHeader {
 	rets := []*RequestHeaderSchema{}
-	r.DB.Where("Identifier = ? AND IsEdit = ?", Identifier, IsEdit).Find(rets)
+	db := r.OpenDB()
+	defer db.Close()
+	db.Where("Identifier = ? AND IsEdit = ?", Identifier, IsEdit).Find(rets)
 	retentity := &entity.HTTPHeader{}
 	for _, data := range rets {
 		retentity.Header.Add(data.Name, data.Value)
@@ -119,12 +126,14 @@ type RequestData struct {
 	historyCommon
 }
 
-func NewRequestData(db *gorm.DB) repository.RequestDataRepositry {
-	return &RequestData{historyCommon{DB: db}}
+func NewRequestData(dbconfig config.DatabaseConfig) repository.RequestDataRepositry {
+	return &RequestData{historyCommon{DBconfig: dbconfig}}
 }
 
 //Insert はRequestDataを保存します
 func (r *RequestData) Insert(Identifier string, IsEdit bool, e *entity.Data) bool {
+	db := r.OpenDB()
+	defer db.Close()
 	for _, key := range e.GetKeys() {
 		insertData := &RequestDataSchema{
 			Identifier: Identifier,
@@ -134,7 +143,7 @@ func (r *RequestData) Insert(Identifier string, IsEdit bool, e *entity.Data) boo
 			Value:      e.Data[key].(string),
 		}
 
-		r.DB.Create(insertData)
+		db.Create(insertData)
 	}
 	return true
 }
@@ -188,8 +197,10 @@ func retstring(in interface{}) []string {
 
 //Fetch はentity.Dataを取得します
 func (r *RequestData) Fetch(Identifier string, IsEdit bool) *entity.Data {
+	db := r.OpenDB()
+	defer db.Close()
 	rets := []*RequestDataSchema{}
-	r.DB.Where("Identifier = ? AND IsEdit = ?", Identifier, IsEdit).Find(rets)
+	db.Where("Identifier = ? AND IsEdit = ?", Identifier, IsEdit).Find(rets)
 	retentity := &entity.Data{}
 	retentity.Type = rets[0].Type
 	for _, data := range rets {

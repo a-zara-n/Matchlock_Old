@@ -38,23 +38,24 @@ func NewRegistry() Registry {
 	var (
 		//config
 		dbconf  = registry.NewDatabaseConfig()
-		db      = dbconf.OpenDB(dbconf.GetConnect())
 		channel = registry.NewMatchlockChannel()
 		//Domain
 		forward   = registry.NewForward()
 		whitelist = registry.NewWhiteList()
 		//Repository
-		reqrepo = registry.NewRequestRepositry(db)
-		resrepo = registry.NewResponseRepositry(db)
+		reqrepo     = registry.NewRequestRepositry(dbconf)
+		resrepo     = registry.NewResponseRepositry(dbconf)
+		historyrepo = registry.NewHistoryRepositry(dbconf)
+		messagerepo = registry.NewHTTPMessageRepositry(dbconf)
 		//UseCase
 		html      = registry.NewHTMLUseCase()
-		api       = registry.NewAPIUsecase(forward, reqrepo, resrepo)
-		websocket = registry.NewWebSocketUsecase(reqrepo, resrepo)
-		manager   = registry.NewManagerUsecase(channel, reqrepo, resrepo, forward)
+		api       = registry.NewAPIUsecase(forward, reqrepo, resrepo, historyrepo, messagerepo)
+		websocket = registry.NewWebSocketUsecase(reqrepo, resrepo, historyrepo)
+		manager   = registry.NewManagerUsecase(channel, reqrepo, resrepo, historyrepo, forward)
 	)
 	whitelist.Add(`^[0-9a-zA-Z]*\.?(localhost)(\.+[0-9a-zA-Z]+)*$`)
 	//Interface
-	registry.initDBschema(db)
+	registry.initDBschema(dbconf.OpenDB(dbconf.GetConnect()))
 	registry.Channel = channel
 	registry.Proxy = registry.NewProxy(registry.NewLogic(whitelist, channel.Proxy))
 	registry.HTTP = registry.NewHTTPServer(channel.Server, html, api, websocket, manager)
@@ -83,7 +84,9 @@ func sigClose(m config.Channel) {
 }
 
 func (r *registry) initDBschema(db *gorm.DB) {
+	defer db.Close()
 	dbschema := []interface{}{
+		datastore.HistorySchema{},
 		datastore.RequestInfoSchema{},
 		datastore.RequestDataSchema{},
 		datastore.RequestHeaderSchema{},
