@@ -22,13 +22,14 @@ type managerUsecase struct {
 	channel        config.Channel
 	MemoryRequest  repository.RequestRepositry
 	MemoryResponse repository.ResponseRepositry
+	MemoryHistory  repository.HistoryRepository
 	flag           *value.Forward
 }
 
 //NewManagerUsecase はManagerUsecaseを返します
-func NewManagerUsecase(channel config.Channel, repuestrepo repository.RequestRepositry, responserepo repository.ResponseRepositry, forward *value.Forward) ManagerUsecase {
+func NewManagerUsecase(channel config.Channel, repuestrepo repository.RequestRepositry, responserepo repository.ResponseRepositry, history repository.HistoryRepository, forward *value.Forward) ManagerUsecase {
 
-	return &managerUsecase{channel, repuestrepo, responserepo, forward}
+	return &managerUsecase{channel, repuestrepo, responserepo, history, forward}
 }
 func (m *managerUsecase) InternalCommunication() {
 	for {
@@ -40,7 +41,7 @@ func (m *managerUsecase) InternalCommunication() {
 			httpmessage.SetEditedRequest(req)
 			log.Println("リクエストを保存を開始します")
 			go m.MemoryRequest.Insert(httpmessage.Get(), false, httpmessage.Request)
-
+			go m.MemoryHistory.Insert(httpmessage.Get(), false)
 			if m.flag.Get() {
 				log.Println("forwardがONです")
 				m.channel.Server.Request <- httpmessage.Request
@@ -58,6 +59,7 @@ func (m *managerUsecase) InternalCommunication() {
 			//保存methodを追加
 			go m.MemoryResponse.Insert(httpmessage.Get(), httpmessage.Response)
 			if m.flag.Get() && httpmessage.IsEdited() {
+				go m.MemoryHistory.Update(httpmessage.Get(), true)
 				go m.MemoryRequest.Insert(httpmessage.Get(), true, httpmessage.EditRequest)
 			}
 		}
