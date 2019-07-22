@@ -12,7 +12,7 @@ import (
 type Usecase interface {
 	NewLogic(white *entity.WhiteList, c *config.ProxyChannel) application.ProxyLogic
 	NewHTMLUseCase() usecase.HTMLUsecase
-	NewAPIUsecase(f *value.Forward, memreq repository.RequestRepositry, memres repository.ResponseRepositry, history repository.HistoryRepository, message repository.HTTPMessageRepository) *usecase.APIUsecase
+	NewAPIUsecase(f *value.Forward, whitelist *entity.WhiteList, history repository.HistoryRepository, message repository.HTTPMessageRepository) *usecase.APIUsecase
 	NewCommandUsecase() usecase.CommandUsecase
 	NewWebSocketUsecase(memreq repository.RequestRepositry, memres repository.ResponseRepositry, hh repository.HistoryRepository) usecase.WebSocketUsecase
 	NewManagerUsecase(channel config.Channel, memreq repository.RequestRepositry, memres repository.ResponseRepositry, history repository.HistoryRepository, f *value.Forward) usecase.ManagerUsecase
@@ -29,8 +29,8 @@ func (r *registry) NewHTMLUseCase() usecase.HTMLUsecase {
 }
 
 //NewAPIUsecase はAPIの処理を取得
-func (r *registry) NewAPIUsecase(f *value.Forward, memreq repository.RequestRepositry, memres repository.ResponseRepositry, history repository.HistoryRepository, message repository.HTTPMessageRepository) *usecase.APIUsecase {
-	return usecase.NewAPIUsecase(f, memreq, memres, history, message)
+func (r *registry) NewAPIUsecase(f *value.Forward, whitelist *entity.WhiteList, history repository.HistoryRepository, message repository.HTTPMessageRepository) *usecase.APIUsecase {
+	return usecase.NewAPIUsecase(f, whitelist, history, message)
 }
 func (r *registry) NewCommandUsecase() usecase.CommandUsecase {
 	return usecase.NewCommandUsecase()

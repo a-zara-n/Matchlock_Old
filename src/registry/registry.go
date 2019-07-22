@@ -49,7 +49,7 @@ func NewRegistry() Registry {
 		messagerepo = registry.NewHTTPMessageRepositry(dbconf)
 		//UseCase
 		html      = registry.NewHTMLUseCase()
-		api       = registry.NewAPIUsecase(forward, reqrepo, resrepo, historyrepo, messagerepo)
+		api       = registry.NewAPIUsecase(forward, whitelist, historyrepo, messagerepo)
 		websocket = registry.NewWebSocketUsecase(reqrepo, resrepo, historyrepo)
 		manager   = registry.NewManagerUsecase(channel, reqrepo, resrepo, historyrepo, forward)
 	)
