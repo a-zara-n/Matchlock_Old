@@ -8,23 +8,25 @@ import (
 	"github.com/jinzhu/gorm"
 )
 
-type historyCommon struct {
+//Common はDB操作を含む全てのstructに含まれる共通構造体です
+type Common struct {
 	DBconfig config.DatabaseConfig
 }
 
-func (h *historyCommon) OpenDB() *gorm.DB {
+//OpenDB は設定されているコンフィグからDBを呼び出します
+func (h *Common) OpenDB() *gorm.DB {
 	return h.DBconfig.OpenDB(h.DBconfig.GetConnect())
 }
 
 //HTTPHistory はAPIで利用されるJSONのschemaを定義しています
 type HTTPHistory struct {
-	historyCommon
+	Common
 	JSON []repository.HTTPHistoryDefinitionJSON
 }
 
 //NewHTTPHistory は
 func NewHTTPHistory(dbconfig config.DatabaseConfig) repository.HistoryRepository {
-	return &HTTPHistory{historyCommon: historyCommon{DBconfig: dbconfig}}
+	return &HTTPHistory{Common: Common{DBconfig: dbconfig}}
 }
 
 //Count は
