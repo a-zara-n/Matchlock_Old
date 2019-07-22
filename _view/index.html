@@ -53,12 +53,14 @@
       document.onmouseup = () => document.onmousemove = document.onmouseup = null;
     }
     var histryTableBody = $("#histryTableBody");
+    var historycount = 0
     $.ajax({
         url:'/api/history/all',
         type:'GET'
     })
     .done(function(data) {
       data.Data.forEach(element => {
+        historycount ++
         body = 
           "<tr onclick='getHTTPData(\""+element.Identifier+"\")'>"+
             "<td>"+element.ID+"</td>"+
@@ -75,7 +77,7 @@
     var InterceptData
     function getHTTPData(hash) {
       $.ajax({
-        url:'/api/request/'+hash,
+        url:'/api/message/'+hash,
         type:'GET'
       }).done(function(data) {
         data.Data["Header"]     = JSON.parse(data.Data["Header"]);
@@ -100,11 +102,11 @@
           alert("エラー: WebSocket接続が行われていません。");
           return false;
         }
-        msg = {Type: "Request", Data: msgBox.val()};
+        msg = {Type: "Intercept", Data: msgBox.val()};
         jstr = JSON.stringify(msg);
         socket.send(jstr);
         msgBox.val("");
-        return false;
+        return true;
       });
 
       if (!window["WebSocket"]) {
@@ -123,6 +125,7 @@
           } else if(data.Type == "History") {
             d = JSON.parse(data.Data)
             d.Data.forEach(element => {
+              historycount ++
               body = 
                 "<tr onclick='getHTTPData(\""+element.Identifier+"\")'>"+
                 "<td>"+element.ID+"</td>"+
@@ -134,6 +137,11 @@
                 "</tr>";
                 histryTableBody.append(body);
             })
+          } else if(data.Type == "HistoryCount"){
+            retnum = historycount+1
+            msg = {Type: "HistoryCount", Data: retnum.toString(10)};
+            jstr = JSON.stringify(msg);
+            socket.send(jstr);
           }
         }
       }
