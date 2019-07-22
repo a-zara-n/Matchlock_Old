@@ -17,10 +17,26 @@ type Message struct {
 type APIresponse struct {
 	Data interface{} `json:"Data"`
 }
+
+type ID struct {
+	ID int `json:"id" form:"id" query:"id"`
+}
+type Regex struct {
+	Regex string `json:"regex" form:"regex" query:"regex"`
+}
+
+type request struct {
+	ID
+	Regex
+}
 type API interface {
 	ChangeForward(c echo.Context) error
 	FetchHistory(c echo.Context) error
 	FetchMessage(c echo.Context) error
+	FetchWhiteList(c echo.Context) error
+	UpdateWhiteList(c echo.Context) error
+	DeleteWhiteList(c echo.Context) error
+	AddWhiteList(c echo.Context) error
 }
 type api struct {
 	usecase *usecase.APIUsecase
@@ -43,7 +59,7 @@ func (api *api) FetchHistory(c echo.Context) error {
 	)
 	switch c.Param("type") {
 	case "all":
-		historys = api.usecase.FetchAll()
+		historys = api.usecase.FetchHistoryAll()
 	}
 	responsedata, err := json.Marshal(APIresponse{Data: historys})
 	if err != nil {
@@ -64,5 +80,40 @@ func (api *api) FetchMessage(c echo.Context) error {
 	}
 	response.Header().Set("Content-Type", "application/json")
 	response.Write(responsedata)
+	return nil
+}
+
+func (api *api) FetchWhiteList(c echo.Context) error {
+	c.JSON(http.StatusOK, APIresponse{Data: api.usecase.FetchWhiteList(0)})
+	return nil
+}
+
+func (api *api) UpdateWhiteList(c echo.Context) error {
+	req := new(request)
+	if err := c.Bind(req); err != nil {
+		c.JSON(http.StatusOK, map[string]interface{}{"status": false})
+		return err
+	}
+	c.JSON(http.StatusOK, map[string]interface{}{"status": api.usecase.UpdateWhiteList(req.ID.ID, req.Regex.Regex)})
+	return nil
+}
+
+func (api *api) DeleteWhiteList(c echo.Context) error {
+	req := new(request)
+	if err := c.Bind(req); err != nil {
+		c.JSON(http.StatusOK, map[string]interface{}{"status": false})
+		return err
+	}
+	c.JSON(http.StatusOK, map[string]interface{}{"status": api.usecase.DelWhiteList(req.ID.ID)})
+	return nil
+}
+
+func (api *api) AddWhiteList(c echo.Context) error {
+	req := new(request)
+	if err := c.Bind(req); err != nil {
+		c.JSON(http.StatusOK, map[string]interface{}{"status": false})
+		return err
+	}
+	c.JSON(http.StatusOK, map[string]interface{}{"status": api.usecase.AddWhiteList(req.Regex.Regex)})
 	return nil
 }
