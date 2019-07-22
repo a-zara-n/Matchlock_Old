@@ -1,20 +1,31 @@
 package datastore
 
 import (
-	"github.com/a-zara-n/Matchlock/src/domain/aggregate"
+	"github.com/a-zara-n/Matchlock/src/config"
 	"github.com/a-zara-n/Matchlock/src/domain/repository"
-	"github.com/jinzhu/gorm"
 )
 
 type HTTPMessage struct {
 	historyCommon
+	JSON []repository.HTTPMessageDefinitionJSON
 }
 
-//NewNewHTTPMessage はRequestDataを取得する
-func NewHTTPMessage(db *gorm.DB) repository.HTTPMessageRepository {
-	return &HTTPMessage{historyCommon{DB: db}}
+//NewHTTPMessage はRequestDataを取得する
+func NewHTTPMessage(dbconfig config.DatabaseConfig) repository.HTTPMessageRepository {
+	return &HTTPMessage{historyCommon: historyCommon{DBconfig: dbconfig}}
 }
 
-func (hh *HTTPMessage) Fetch(Identifier string, IsEdit bool) *aggregate.HTTPMessages {
-	return &aggregate.HTTPMessages{}
+//Fetch はhttpのrequest + edit request + responseを返します
+func (hm *HTTPMessage) Fetch(Identifier string) []repository.HTTPMessageDefinitionJSON {
+	httpmessage := hm.JSON
+	db := hm.OpenDB()
+	defer db.Close()
+	db.Table("history_schemas").
+		Select(httpData["SELECT"]).
+		Joins(httpData["NoEditReq"]).
+		Joins(httpData["EditReq"]).
+		Joins(httpData["Response"]).
+		Where("history_schemas.identifier = ?", Identifier).
+		Find(&httpmessage)
+	return httpmessage
 }
