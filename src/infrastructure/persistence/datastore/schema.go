@@ -2,6 +2,12 @@ package datastore
 
 import "github.com/jinzhu/gorm"
 
+type HistorySchema struct {
+	gorm.Model
+	Identifier string
+	IsEdit     bool
+}
+
 //RequestInfoSchema はリクエストの各種情報を保存するschemaです
 type RequestInfoSchema struct {
 	gorm.Model
