@@ -8,11 +8,13 @@ import (
 
 //APIUsecase で利用されるUsecaseをまとめた構造体
 type APIUsecase struct {
-	api.Forward
+	api.ForwordInterface
+	api.HistoryInterface
+	api.MessageInterface
 }
 
-func NewAPIUsecase(f *value.Forward, memreq repository.RequestRepositry, memres repository.ResponseRepositry) *APIUsecase {
+func NewAPIUsecase(f *value.Forward, memreq repository.RequestRepositry, memres repository.ResponseRepositry, history repository.HistoryRepository, message repository.HTTPMessageRepository) *APIUsecase {
 	return &APIUsecase{
-		api.NewForward(f),
+		api.NewForword(f), api.NewHistory(history), api.NewMessage(message),
 	}
 }
