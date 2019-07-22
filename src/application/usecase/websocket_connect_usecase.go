@@ -6,21 +6,21 @@ import (
 )
 
 type WebSocketUsecase interface {
-	GetHTTPRequestByRequest(data string) *aggregate.Request
 	GetHTTPRequestByString(data *aggregate.Request) string
+	DiffHistory(i int) interface{}
 }
 type websocketusecase struct {
-	request aggregate.Request
+	repository.HistoryRepository
 }
 
-func NewWebSocketUsecase(memreq repository.RequestRepositry, memres repository.ResponseRepositry) WebSocketUsecase {
-	return &websocketusecase{request: aggregate.Request{}}
+func NewWebSocketUsecase(memreq repository.RequestRepositry, memres repository.ResponseRepositry, hh repository.HistoryRepository) WebSocketUsecase {
+	return &websocketusecase{hh}
 }
 
-func (wsu *websocketusecase) GetHTTPRequestByRequest(data string) *aggregate.Request {
-	wsu.request.SetHTTPRequestByString(data)
-	return &wsu.request
-}
 func (wsu *websocketusecase) GetHTTPRequestByString(data *aggregate.Request) string {
 	return data.GetHTTPRequestByString()
+}
+
+func (wsu *websocketusecase) DiffHistory(i int) interface{} {
+	return wsu.Fetch(i)
 }
