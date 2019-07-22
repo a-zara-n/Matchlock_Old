@@ -1,13 +1,13 @@
 LEFT JOIN(
 	SELECT 
 		req.identifier as identifier, method , path, proto, host, header, param
-	FROM "requests" as req
+	FROM "request_info_schemas" as req
 	LEFT JOIN (
 		SELECT
 			identifier,
 			'{"data":{'||group_concat('"'||name||'":"'||value||'"',",")||"}}" AS param
 		FROM
-			"request_data"
+			"request_data_schemas"
 		GROUP BY identifier
 		ORDER BY id ASC
 	) AS reqd ON
@@ -17,11 +17,11 @@ LEFT JOIN(
 			identifier,
 			'{"header":{'||group_concat('"'||name||'": "'||value||'"',",")||"}}" AS header
 		FROM
-			"request_headers"
+			"request_header_schemas"
 		GROUP BY identifier
 		ORDER BY id ASC
 	) AS reqh ON
 		req.identifier = reqh.identifier
 	WHERE is_edit = 0
 ) AS reqNoEdit ON
-	histories.identifier = reqNoEdit.identifier
+	history_schemas.identifier = reqNoEdit.identifier

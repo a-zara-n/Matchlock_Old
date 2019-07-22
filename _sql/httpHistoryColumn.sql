@@ -1,4 +1,4 @@
-distinct histories.identifier as identifier,
+distinct history_schemas.identifier as identifier,
 reqNoEdit.method    AS request_method,
 reqNoEdit.path      AS request_path,
 reqNoEdit.proto     AS request_proto,
