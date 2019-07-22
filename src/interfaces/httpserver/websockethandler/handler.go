@@ -1,7 +1,10 @@
 package websockethandler
 
 import (
+	"encoding/json"
 	"log"
+	"strconv"
+	"time"
 
 	"github.com/a-zara-n/Matchlock/src/config"
 
@@ -35,6 +38,9 @@ type webSocketHandler struct {
 type WebSocketRequest struct {
 	Type string `json:"Type"`
 	Data string `json:"Data"`
+}
+type WSresponse struct {
+	Data interface{} `json:"Data"`
 }
 
 //NewWebSocketHandler はWebSocketのコネクションん管理を行います
@@ -71,6 +77,7 @@ func (ws *webSocketHandler) ServeHTTP(cont echo.Context) error {
 }
 
 func (ws *webSocketHandler) Run() {
+	go ws.asynchronousSocketMethod()
 	for {
 		select {
 		case client := <-ws.join:
@@ -82,18 +89,36 @@ func (ws *webSocketHandler) Run() {
 			delete(ws.clients, client)
 			close(client.send)
 		case msg := <-ws.forward:
-			ws.channel.Response <- msg.Data
+			switch msg.Type {
+			case "Intercept":
+				ws.channel.Response <- msg.Data
+			case "HistoryCount":
+				i, _ := strconv.Atoi(msg.Data)
+				res, _ := json.Marshal(WSresponse{Data: ws.usecase.DiffHistory(i)})
+				ws.distribution(WebSocketRequest{Type: "History", Data: string(res)})
+			}
 		case r := <-ws.channel.Request:
 			log.Println("リクエストを受信しました")
-			mes := WebSocketRequest{Type: "Request", Data: ws.usecase.GetHTTPRequestByString(r)}
-			for client := range ws.clients {
-				select {
-				case client.send <- mes:
-				default:
-					delete(ws.clients, client)
-					close(client.send)
-				}
-			}
+			ws.distribution(WebSocketRequest{Type: "Request", Data: ws.usecase.GetHTTPRequestByString(r)})
+		}
+	}
+}
+
+func (ws *webSocketHandler) asynchronousSocketMethod() {
+	time.Sleep(5 * time.Second)
+	for {
+		time.Sleep(1 * time.Second)
+		go ws.distribution(WebSocketRequest{Type: "HistoryCount", Data: ""})
+	}
+}
+
+func (ws *webSocketHandler) distribution(msg WebSocketRequest) {
+	for client := range ws.clients {
+		select {
+		case client.send <- msg:
+		default:
+			delete(ws.clients, client)
+			close(client.send)
 		}
 	}
 }

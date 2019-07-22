@@ -18,8 +18,9 @@ func (c *client) read() {
 	for {
 		if err := c.socket.ReadJSON(&msg); err == nil {
 			switch msg.Type {
-			case "Request":
+			case "Intercept", "HistoryCount":
 				c.connect.forward <- msg
+
 			}
 		} else {
 			break
