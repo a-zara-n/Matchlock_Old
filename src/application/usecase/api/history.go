@@ -6,7 +6,7 @@ import (
 
 //HistoryInterface は履歴取得のために必要なmethodを定義したインターフェースです
 type HistoryInterface interface {
-	FetchAll() interface{}
+	FetchHistoryAll() interface{}
 }
 
 //History は履歴を取得するための各種情報を保持するための構造体です
@@ -19,6 +19,6 @@ func NewHistory(hh repository.HistoryRepository) HistoryInterface {
 	return &History{hh}
 }
 
-func (h *History) FetchAll() interface{} {
+func (h *History) FetchHistoryAll() interface{} {
 	return h.Fetch(1)
 }
