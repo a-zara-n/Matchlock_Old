@@ -39,13 +39,30 @@ func (req *Request) Fetch(Identifier string, IsEdit bool) *aggregate.Request {
 	return retentity
 }
 
+//FetchHostRequests は第一引数で渡したホスト名のリクエストの一覧を探索します
+func (req *Request) FetchHostRequests(host string) []*aggregate.Request {
+	return req.requestFactry(req.Info.FetchInfo(host))
+}
+
+//FetchHostRequests は第一引数で渡したホスト名のリクエストの一覧を探索します
+func (req *Request) requestFactry(infolist []*entity.RequestInfo) []*aggregate.Request {
+	var reqestlist []*aggregate.Request
+	if len(infolist) > 1 {
+		reqestlist = append(reqestlist, req.requestFactry(infolist[1:])...)
+	}
+	info := infolist[0]
+	return append(reqestlist, &aggregate.Request{
+		Info: info, Header: req.Header.FetchHeader(info), Data: req.Data.FetchData(info),
+	})
+}
+
 //RequestInfo は
 type RequestInfo struct {
-	historyCommon
+	Common
 }
 
 func NewRequestInfo(dbconfig config.DatabaseConfig) repository.RequestInfoRepositry {
-	return &RequestInfo{historyCommon{DBconfig: dbconfig}}
+	return &RequestInfo{Common: Common{DBconfig: dbconfig}}
 }
 
 //Insert はRequestInfoを保存します
@@ -82,14 +99,36 @@ func (r *RequestInfo) Fetch(Identifier string, IsEdit bool) *entity.RequestInfo 
 	return retentity
 }
 
+func (r *RequestInfo) FetchInfo(host string) []*entity.RequestInfo {
+	var (
+		requestinfos = []*entity.RequestInfo{}
+		rets         = []*RequestInfoSchema{}
+	)
+	db := r.OpenDB()
+	db.Select("Distinct method,url,proto").
+		Where("host LIKE ?", "%"+host+"%").
+		Find(&rets)
+	for _, info := range rets {
+		u, _ := url.Parse(info.URL)
+		requestinfos = append(requestinfos, &entity.RequestInfo{
+			Host:   info.Host,
+			Method: info.Method,
+			URL:    u,
+			Path:   info.Path,
+			Proto:  info.Proto,
+		})
+	}
+	return requestinfos
+}
+
 //RequestHeader は
 type RequestHeader struct {
-	historyCommon
+	Common
 }
 
 //NewRequestHeader はRequestHeaderを取得する
 func NewRequestHeader(dbconfig config.DatabaseConfig) repository.RequestHeaderRepositry {
-	return &RequestHeader{historyCommon{DBconfig: dbconfig}}
+	return &RequestHeader{Common: Common{DBconfig: dbconfig}}
 }
 
 //Insert はHTTPHeaderを保存します
@@ -120,14 +159,28 @@ func (r *RequestHeader) Fetch(Identifier string, IsEdit bool) *entity.HTTPHeader
 	}
 	return retentity
 }
+func (r *RequestHeader) FetchHeader(info *entity.RequestInfo) *entity.HTTPHeader {
+	rets := []*RequestHeaderSchema{}
+	db := r.OpenDB()
+	defer db.Close()
+	db.Select("name, value, request_headers.is_edit AS is_edit").
+		Joins("LEFT JOIN requests ON requests.identifier = request_headers.identifier").
+		Where("host = ? AND path = ? AND method = ?", info.Host, info.Path, info.Method).
+		Group("name").Find(rets)
+	retentity := &entity.HTTPHeader{}
+	for _, data := range rets {
+		retentity.Header.Add(data.Name, data.Value)
+	}
+	return retentity
+}
 
 //RequestData は
 type RequestData struct {
-	historyCommon
+	Common
 }
 
 func NewRequestData(dbconfig config.DatabaseConfig) repository.RequestDataRepositry {
-	return &RequestData{historyCommon{DBconfig: dbconfig}}
+	return &RequestData{Common: Common{DBconfig: dbconfig}}
 }
 
 //Insert はRequestDataを保存します
@@ -202,7 +255,23 @@ func (r *RequestData) Fetch(Identifier string, IsEdit bool) *entity.Data {
 	rets := []*RequestDataSchema{}
 	db.Where("Identifier = ? AND IsEdit = ?", Identifier, IsEdit).Find(rets)
 	retentity := &entity.Data{}
-	retentity.Type = rets[0].Type
+	retentity.Type = rets[0].Style
+	for _, data := range rets {
+		retentity.Keys = append(retentity.Keys, data.Name)
+		retentity.Data[data.Name] = data.Value
+	}
+	return retentity
+}
+func (r *RequestData) FetchData(info *entity.RequestInfo) *entity.Data {
+	db := r.OpenDB()
+	defer db.Close()
+	rets := []*RequestDataSchema{}
+	db.Select("name, value, type, request_data.is_edit AS is_edit").
+		Joins("LEFT JOIN requests ON requests.identifier = request_data.identifier").
+		Where("host = ? AND path = ? AND method = ?", info.Host, info.Path, info.Method).
+		Group("name").Find(rets)
+	retentity := &entity.Data{}
+	retentity.Type = rets[0].Style
 	for _, data := range rets {
 		retentity.Keys = append(retentity.Keys, data.Name)
 		retentity.Data[data.Name] = data.Value
