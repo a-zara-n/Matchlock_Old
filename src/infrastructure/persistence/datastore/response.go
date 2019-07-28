@@ -40,12 +40,12 @@ func (r *Response) Fetch(Identifier string) *aggregate.Response {
 
 //ResponseInfo は保存用のRepositryです
 type ResponseInfo struct {
-	historyCommon
+	Common
 }
 
 //NewResponseInfo は
 func NewResponseInfo(dbconfig config.DatabaseConfig) repository.ResponseInfoRepositry {
-	return &ResponseInfo{historyCommon{DBconfig: dbconfig}}
+	return &ResponseInfo{Common: Common{DBconfig: dbconfig}}
 }
 
 //Insert はRequestInfoを保存します
@@ -82,12 +82,12 @@ func (r *ResponseInfo) Fetch(Identifier string) *entity.ResponseInfo {
 
 //ResponseHeader は保存用のRepositryです
 type ResponseHeader struct {
-	historyCommon
+	Common
 }
 
 //NewResponseHeader は
 func NewResponseHeader(dbconfig config.DatabaseConfig) repository.ResponseHeaderRepositry {
-	return &ResponseHeader{historyCommon{DBconfig: dbconfig}}
+	return &ResponseHeader{Common: Common{DBconfig: dbconfig}}
 }
 
 //Insert はResponseHeaderを保存します
@@ -120,12 +120,12 @@ func (r *ResponseHeader) Fetch(Identifier string) *entity.HTTPHeader {
 
 //ResponseBody は保存用のRepositryです
 type ResponseBody struct {
-	historyCommon
+	Common
 }
 
 //NewResponseBody は
 func NewResponseBody(dbconfig config.DatabaseConfig) repository.ResponseBodyRepositry {
-	return &ResponseBody{historyCommon{DBconfig: dbconfig}}
+	return &ResponseBody{Common: Common{DBconfig: dbconfig}}
 }
 
 //Insert はBodyを保存します

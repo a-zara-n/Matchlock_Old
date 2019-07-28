@@ -6,13 +6,13 @@ import (
 )
 
 type HTTPMessage struct {
-	historyCommon
+	Common
 	JSON []repository.HTTPMessageDefinitionJSON
 }
 
 //NewHTTPMessage はRequestDataを取得する
 func NewHTTPMessage(dbconfig config.DatabaseConfig) repository.HTTPMessageRepository {
-	return &HTTPMessage{historyCommon: historyCommon{DBconfig: dbconfig}}
+	return &HTTPMessage{Common: Common{DBconfig: dbconfig}}
 }
 
 //Fetch はhttpのrequest + edit request + responseを返します
