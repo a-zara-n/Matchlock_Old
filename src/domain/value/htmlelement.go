@@ -1,15 +1,20 @@
 package value
 
-//HTMLElementInterface は
-type HTMLElementInterface interface {
+import "golang.org/x/net/html"
+
+//FormElementInterface は
+type FormElementInterface interface {
 }
 
 //HTMLElement は
 type HTMLElement struct {
+	Tag       string
+	Attr      []html.Attribute
+	ParamData []HTMLElement
 }
 
-//NewHTMLElement は
-func NewHTMLElement() HTMLElementInterface {
+//NewFormElement は
+func NewFormElement() FormElementInterface {
 
 	return &HTMLElement{}
 }
@@ -26,18 +31,4 @@ type LinkString struct {
 func NewLinkString() LinkStringInterface {
 
 	return &LinkString{}
-}
-
-//AttrInterface は
-type AttrInterface interface {
-}
-
-//Attr は
-type Attr struct {
-}
-
-//NewAttr は
-func NewAttr() AttrInterface {
-
-	return &Attr{}
 }
