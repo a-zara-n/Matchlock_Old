@@ -19,6 +19,7 @@ func NewScan(s service.ScannerInterface) ScanInterface {
 }
 
 func (s *Scan) RunScan(host string) bool {
-	s.Listup(host)
+	s.Listup(host, "inspection")
+	s.Run("cluster")
 	return true
 }
