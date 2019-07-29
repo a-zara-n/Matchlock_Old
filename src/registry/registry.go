@@ -47,9 +47,12 @@ func NewRegistry() Registry {
 		resrepo     = registry.NewResponseRepositry(dbconf)
 		historyrepo = registry.NewHistoryRepositry(dbconf)
 		messagerepo = registry.NewHTTPMessageRepositry(dbconf)
+		//Service
+		scan    = registry.NewScanner(reqrepo)
+		crawler = registry.NewCrawler(reqrepo, resrepo)
 		//UseCase
 		html      = registry.NewHTMLUseCase()
-		api       = registry.NewAPIUsecase(forward, whitelist, historyrepo, messagerepo)
+		api       = registry.NewAPIUsecase(forward, whitelist, historyrepo, messagerepo, scan, crawler)
 		websocket = registry.NewWebSocketUsecase(reqrepo, resrepo, historyrepo)
 		manager   = registry.NewManagerUsecase(channel, reqrepo, resrepo, historyrepo, forward)
 	)
