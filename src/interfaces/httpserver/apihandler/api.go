@@ -24,6 +24,9 @@ type ID struct {
 type Regex struct {
 	Regex string `json:"regex" form:"regex" query:"regex"`
 }
+type Host struct {
+	Host string `json:"host" form:"host" query:"host"`
+}
 
 type request struct {
 	ID
@@ -37,6 +40,7 @@ type API interface {
 	UpdateWhiteList(c echo.Context) error
 	DeleteWhiteList(c echo.Context) error
 	AddWhiteList(c echo.Context) error
+	RunScan(c echo.Context) error
 }
 type api struct {
 	usecase *usecase.APIUsecase
@@ -99,21 +103,31 @@ func (api *api) UpdateWhiteList(c echo.Context) error {
 }
 
 func (api *api) DeleteWhiteList(c echo.Context) error {
-	req := new(request)
+	req := new(ID)
 	if err := c.Bind(req); err != nil {
 		c.JSON(http.StatusOK, map[string]interface{}{"status": false})
 		return err
 	}
-	c.JSON(http.StatusOK, map[string]interface{}{"status": api.usecase.DelWhiteList(req.ID.ID)})
+	c.JSON(http.StatusOK, map[string]interface{}{"status": api.usecase.DelWhiteList(req.ID)})
 	return nil
 }
 
 func (api *api) AddWhiteList(c echo.Context) error {
-	req := new(request)
+	req := new(Regex)
 	if err := c.Bind(req); err != nil {
 		c.JSON(http.StatusOK, map[string]interface{}{"status": false})
 		return err
 	}
-	c.JSON(http.StatusOK, map[string]interface{}{"status": api.usecase.AddWhiteList(req.Regex.Regex)})
+	c.JSON(http.StatusOK, map[string]interface{}{"status": api.usecase.AddWhiteList(req.Regex)})
+	return nil
+}
+
+func (api *api) RunScan(c echo.Context) error {
+	host := new(Host)
+	if err := c.Bind(host); err != nil {
+		c.JSON(http.StatusOK, map[string]interface{}{"status": false})
+		return err
+	}
+	c.JSON(http.StatusOK, map[string]interface{}{"status": api.usecase.RunScan(host.Host)})
 	return nil
 }
