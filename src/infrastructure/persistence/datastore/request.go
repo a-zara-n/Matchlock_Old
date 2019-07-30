@@ -1,6 +1,7 @@
 package datastore
 
 import (
+	"net/http"
 	"net/url"
 	"reflect"
 	"strconv"
@@ -41,7 +42,8 @@ func (req *Request) Fetch(Identifier string, IsEdit bool) *aggregate.Request {
 
 //FetchHostRequests は第一引数で渡したホスト名のリクエストの一覧を探索します
 func (req *Request) FetchHostRequests(host string) []*aggregate.Request {
-	return req.requestFactry(req.Info.FetchInfo(host))
+	hosts := req.Info.FetchInfo(host)
+	return req.requestFactry(hosts)
 }
 
 //FetchHostRequests は第一引数で渡したホスト名のリクエストの一覧を探索します
@@ -51,8 +53,10 @@ func (req *Request) requestFactry(infolist []*entity.RequestInfo) []*aggregate.R
 		reqestlist = append(reqestlist, req.requestFactry(infolist[1:])...)
 	}
 	info := infolist[0]
+	header := req.Header.FetchHeader(info)
+	data := req.Data.FetchData(info)
 	return append(reqestlist, &aggregate.Request{
-		Info: info, Header: req.Header.FetchHeader(info), Data: req.Data.FetchData(info),
+		Info: info, Header: header, Data: data,
 	})
 }
 
@@ -69,6 +73,7 @@ func NewRequestInfo(dbconfig config.DatabaseConfig) repository.RequestInfoReposi
 func (r *RequestInfo) Insert(Identifier string, IsEdit bool, e *entity.RequestInfo) bool {
 	db := r.OpenDB()
 	defer db.Close()
+	e.URL.RawQuery = ""
 	insertRequestInfo := &RequestInfoSchema{
 		Identifier: Identifier,
 		IsEdit:     IsEdit,
@@ -105,7 +110,7 @@ func (r *RequestInfo) FetchInfo(host string) []*entity.RequestInfo {
 		rets         = []*RequestInfoSchema{}
 	)
 	db := r.OpenDB()
-	db.Select("Distinct method,url,proto").
+	db.Debug().Select("Distinct method,url,proto,host,path").
 		Where("host LIKE ?", "%"+host+"%").
 		Find(&rets)
 	for _, info := range rets {
@@ -160,18 +165,18 @@ func (r *RequestHeader) Fetch(Identifier string, IsEdit bool) *entity.HTTPHeader
 	return retentity
 }
 func (r *RequestHeader) FetchHeader(info *entity.RequestInfo) *entity.HTTPHeader {
-	rets := []*RequestHeaderSchema{}
+	rets := []RequestHeaderSchema{}
 	db := r.OpenDB()
 	defer db.Close()
-	db.Select("name, value, request_headers.is_edit AS is_edit").
-		Joins("LEFT JOIN requests ON requests.identifier = request_headers.identifier").
+	db.Table("request_header_schemas").Select("name, value, request_header_schemas.is_edit AS is_edit").
+		Joins("LEFT JOIN request_info_schemas ON request_info_schemas.identifier = request_header_schemas.identifier").
 		Where("host = ? AND path = ? AND method = ?", info.Host, info.Path, info.Method).
-		Group("name").Find(rets)
-	retentity := &entity.HTTPHeader{}
+		Group("name").Find(&rets)
+	header := http.Header{}
 	for _, data := range rets {
-		retentity.Header.Add(data.Name, data.Value)
+		header.Add(data.Name, data.Value)
 	}
-	return retentity
+	return &entity.HTTPHeader{header}
 }
 
 //RequestData は
@@ -265,16 +270,20 @@ func (r *RequestData) Fetch(Identifier string, IsEdit bool) *entity.Data {
 func (r *RequestData) FetchData(info *entity.RequestInfo) *entity.Data {
 	db := r.OpenDB()
 	defer db.Close()
-	rets := []*RequestDataSchema{}
-	db.Select("name, value, type, request_data.is_edit AS is_edit").
-		Joins("LEFT JOIN requests ON requests.identifier = request_data.identifier").
-		Where("host = ? AND path = ? AND method = ?", info.Host, info.Path, info.Method).
-		Group("name").Find(rets)
-	retentity := &entity.Data{}
+	rets := []RequestDataSchema{}
+	db.Select("name, value, style, request_data_schemas.is_edit AS is_edit").
+		Joins("LEFT JOIN request_info_schemas ON request_info_schemas.identifier = request_data_schemas.identifier").
+		Where("request_info_schemas.host = ? AND request_info_schemas.path = ? AND request_info_schemas.method = ?", info.Host, info.Path, info.Method).
+		Group("name").Find(&rets)
+	retentity := entity.Data{}
+	if len(rets) < 1 {
+		return &retentity
+	}
 	retentity.Type = rets[0].Style
+	retentity.Data = map[string]interface{}{}
 	for _, data := range rets {
 		retentity.Keys = append(retentity.Keys, data.Name)
 		retentity.Data[data.Name] = data.Value
 	}
-	return retentity
+	return &retentity
 }

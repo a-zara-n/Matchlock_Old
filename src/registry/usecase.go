@@ -3,16 +3,18 @@ package registry
 import (
 	"github.com/a-zara-n/Matchlock/src/application"
 	"github.com/a-zara-n/Matchlock/src/application/usecase"
+	"github.com/a-zara-n/Matchlock/src/application/usecase/api"
 	"github.com/a-zara-n/Matchlock/src/config"
 	"github.com/a-zara-n/Matchlock/src/domain/entity"
 	"github.com/a-zara-n/Matchlock/src/domain/repository"
+	"github.com/a-zara-n/Matchlock/src/domain/service"
 	"github.com/a-zara-n/Matchlock/src/domain/value"
 )
 
 type Usecase interface {
 	NewLogic(white *entity.WhiteList, c *config.ProxyChannel) application.ProxyLogic
 	NewHTMLUseCase() usecase.HTMLUsecase
-	NewAPIUsecase(f *value.Forward, whitelist *entity.WhiteList, history repository.HistoryRepository, message repository.HTTPMessageRepository) *usecase.APIUsecase
+	NewAPIUsecase(f *value.Forward, whitelist *entity.WhiteList, history repository.HistoryRepository, message repository.HTTPMessageRepository, s service.ScannerInterface, c service.CrawlerInterface) *usecase.APIUsecase
 	NewCommandUsecase() usecase.CommandUsecase
 	NewWebSocketUsecase(memreq repository.RequestRepositry, memres repository.ResponseRepositry, hh repository.HistoryRepository) usecase.WebSocketUsecase
 	NewManagerUsecase(channel config.Channel, memreq repository.RequestRepositry, memres repository.ResponseRepositry, history repository.HistoryRepository, f *value.Forward) usecase.ManagerUsecase
@@ -29,8 +31,14 @@ func (r *registry) NewHTMLUseCase() usecase.HTMLUsecase {
 }
 
 //NewAPIUsecase はAPIの処理を取得
-func (r *registry) NewAPIUsecase(f *value.Forward, whitelist *entity.WhiteList, history repository.HistoryRepository, message repository.HTTPMessageRepository) *usecase.APIUsecase {
-	return usecase.NewAPIUsecase(f, whitelist, history, message)
+func (r *registry) NewAPIUsecase(f *value.Forward, whitelist *entity.WhiteList, history repository.HistoryRepository, message repository.HTTPMessageRepository, s service.ScannerInterface, c service.CrawlerInterface) *usecase.APIUsecase {
+	return &usecase.APIUsecase{
+		api.NewForword(f),
+		api.NewHistory(history),
+		api.NewMessage(message),
+		api.NewWhiteList(whitelist),
+		api.NewScan(s),
+	}
 }
 func (r *registry) NewCommandUsecase() usecase.CommandUsecase {
 	return usecase.NewCommandUsecase()
