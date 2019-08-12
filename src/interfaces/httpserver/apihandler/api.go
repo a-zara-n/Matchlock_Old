@@ -115,8 +115,12 @@ func (api *api) DeleteWhiteList(c echo.Context) error {
 func (api *api) AddWhiteList(c echo.Context) error {
 	req := new(Regex)
 	if err := c.Bind(req); err != nil {
-		c.JSON(http.StatusOK, map[string]interface{}{"status": false})
+		c.JSON(http.StatusExpectationFailed, map[string]interface{}{"status": false})
 		return err
+	}
+	if req.Regex == "" {
+		c.JSON(http.StatusNoContent, map[string]interface{}{"status": false})
+		return nil
 	}
 	c.JSON(http.StatusOK, map[string]interface{}{"status": api.usecase.AddWhiteList(req.Regex)})
 	return nil
