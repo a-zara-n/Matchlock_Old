@@ -8,6 +8,7 @@ import (
 	"github.com/a-zara-n/Matchlock/src/interfaces/httpserver/middleware"
 	"github.com/a-zara-n/Matchlock/src/interfaces/httpserver/websockethandler"
 	"github.com/labstack/echo"
+	em "github.com/labstack/echo/middleware"
 )
 
 type HttpServer interface {
@@ -35,6 +36,7 @@ func (h *httpServer) Run() {
 	e.HideBanner = true
 	e.Logger.SetLevel(99)
 	e.Renderer = renders()
+	e.Use(em.CORS())
 	e = h.router(e)
 	go h.Middleware.Run()
 	go h.WebSocketHandler.Run()
