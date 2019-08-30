@@ -37,38 +37,21 @@ func (scan *Scanner) Listup(host, tys string) {
 
 func (scan *Scanner) Run(tys string) {
 	//仮置き
+	var modefunc func(style string, name []string, defaultV map[string]interface{}, payloads value.Payload)
 	switch tys {
 	case "all":
-		for _, target := range scan.Targets {
-			data := target.Data
-			fmt.Println("===ALL===")
-			for _, key := range scan.Payload.GetTypeKeys("inspection") {
-				for _, name := range scan.Payload.GetFileName(key) {
-					scan.Payload.SetInfo(key, name)
-					scan.AllChange(data.Type, data.GetKeys(), data.Data, scan.Payload)
-				}
-			}
-		}
+		modefunc = scan.AllChange
 	case "simple":
-		for _, target := range scan.Targets {
-			data := target.Data
-			fmt.Println("===Simple===")
-			for _, key := range scan.Payload.GetTypeKeys("inspection") {
-				for _, name := range scan.Payload.GetFileName(key) {
-					scan.Payload.SetInfo(key, name)
-					scan.SimpleList(data.Type, data.GetKeys(), data.Data, scan.Payload)
-				}
-			}
-		}
+		modefunc = scan.SimpleList
 	case "cluster":
-		for _, target := range scan.Targets {
-			data := target.Data
-			fmt.Println("===Cluster===")
-			for _, key := range scan.Payload.GetTypeKeys("inspection") {
-				for _, name := range scan.Payload.GetFileName(key) {
-					scan.Payload.SetInfo(key, name)
-					scan.Cluster(data.Type, data.GetKeys(), data.Data, scan.Payload)
-				}
+		modefunc = scan.Cluster
+	}
+	for _, target := range scan.Targets {
+		data := target.Data
+		for _, key := range scan.Payload.GetTypeKeys("inspection") {
+			for _, name := range scan.Payload.GetFileName(key) {
+				scan.Payload.SetInfo(key, name)
+				modefunc(data.Type, data.GetKeys(), data.Data, scan.Payload)
 			}
 		}
 	}
