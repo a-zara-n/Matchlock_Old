@@ -2,6 +2,9 @@ package service
 
 import (
 	"fmt"
+	"log"
+	"net/http"
+	"net/http/cookiejar"
 
 	"github.com/a-zara-n/Matchlock/src/domain/entity"
 
@@ -24,20 +27,42 @@ type Scanner struct {
 	Targets []*aggregate.Request
 	Payload value.Payload
 	request repository.RequestRepositry
+	client  http.Client
 }
 
 //NewScanner はScannerを定義します
 func NewScanner(req repository.RequestRepositry) ScannerInterface {
-	return &Scanner{request: req}
+	jar, _ := cookiejar.New(nil)
+	c := http.Client{
+		Jar: jar,
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+	return &Scanner{
+		request: req,
+		client:  c,
+	}
 }
 
 func (scan *Scanner) Listup(host, tys string) {
 	scan.Targets = scan.request.FetchHostRequests(host)
 }
 
+/*
+Run はScannerのスキャン機能を走らせる際に利用するmethodです。
+引数は scan typeのstritng型を引数に与えることで動作します。
+
+scan types
+| name  | discribe
+|:-----:|:--------:
+|all    |パラメータを同時で変更する
+|simple |パラメータを順次変更する。変更をしない箇所はデフォルトの値にする
+|cluster|パラメータとpayloadの組み合わせを全て試す
+*/
 func (scan *Scanner) Run(tys string) {
 	//仮置き
-	var modefunc func(style string, name []string, defaultV map[string]interface{}, payloads value.Payload)
+	var modefunc func(target *aggregate.Request, name []string, defaultV map[string]interface{}, payloads value.Payload)
 	switch tys {
 	case "all":
 		modefunc = scan.AllChange
@@ -45,49 +70,65 @@ func (scan *Scanner) Run(tys string) {
 		modefunc = scan.SimpleList
 	case "cluster":
 		modefunc = scan.Cluster
+	default:
+		return
 	}
 	for _, target := range scan.Targets {
 		data := target.Data
 		for _, key := range scan.Payload.GetTypeKeys("inspection") {
 			for _, name := range scan.Payload.GetFileName(key) {
 				scan.Payload.SetInfo(key, name)
-				modefunc(data.Type, data.GetKeys(), data.Data, scan.Payload)
+				modefunc(target, data.GetKeys(), data.Data, scan.Payload)
 			}
 		}
 	}
 }
 
-func (scan *Scanner) AllChange(style string, name []string, defaultV map[string]interface{}, payloads value.Payload) {
+//scan types methods
+/*
+この区分に属するmethodの引数は統一されるべきである
+引数について
+target :　スキャン対象を定義したaggrigate request
+names : Data(QueryString)に含まれるnameを列挙した配列
+defaultV : 現状のデフォルトvalueを渡す
+Payload : 名前の通り取得したpayload valuesをentityで渡す
+*/
+//All はscan types all の動作を定義した関数
+func (scan *Scanner) AllChange(target *aggregate.Request, names []string, defaultV map[string]interface{}, payloads value.Payload) {
 	data := entity.Data{
-		Type: style,
+		Type: target.Data.Type,
 		Data: defaultV,
 	}
 	for _, d := range payloads.GetPayload() {
-		for _, nm := range name {
+		for _, nm := range names {
 			data.Data[nm] = d
+			target.Data = &data
+			//scan.clientRun(target)
 		}
-		fmt.Println(data.FetchData())
 	}
 }
 
-func (scan *Scanner) SimpleList(style string, name []string, defaultV map[string]interface{}, payloads value.Payload) {
+//SimpleList はAllと同じくscan types のsimplelistを定義した関数
+func (scan *Scanner) SimpleList(target *aggregate.Request, names []string, defaultV map[string]interface{}, payloads value.Payload) {
 	data := entity.Data{
-		Type: style,
+		Type: target.Data.Type,
 		Data: defaultV,
 	}
-	for _, nm := range name {
+	for _, nm := range names {
 		tmp := data.Data[nm]
 		for _, d := range payloads.GetPayload() {
 			data.Data[nm] = d
-			fmt.Println(data.FetchData())
+			target.Data = &data
+			//scan.clientRun(target)
 		}
 		data.Data[nm] = tmp
 	}
 }
 
-func (scan *Scanner) Cluster(style string, name []string, defaultV map[string]interface{}, payloads value.Payload) {
+//Cluster は
+func (scan *Scanner) Cluster(target *aggregate.Request, names []string, defaultV map[string]interface{}, payloads value.Payload) {
 	data := entity.Data{
-		Type: style,
+		Type: target.Data.Type,
 		Data: defaultV,
 	}
 	var recursive func(length int, i int, m entity.Data)
@@ -95,16 +136,23 @@ func (scan *Scanner) Cluster(style string, name []string, defaultV map[string]in
 		//a.Request.Close = true
 		if length > i {
 			for _, p := range payloads.GetPayload() {
-				m.Data[name[i]] = p
+				m.Data[names[i]] = p
 				recursive(length, i+1, m)
 			}
 		} else {
-			fmt.Println(data.FetchData())
+			target.Data = &data
+			//scan.clientRun(target)
 		}
 	}
-	recursive(len(name), 0, data)
+	recursive(len(names), 0, data)
 }
 
-func (scan *Scanner) scanClientRun(submitquery entity.Data, payloadData value.Payload) {
-
+func (scan *Scanner) clientRun(target *aggregate.Request) {
+	res, err := scan.client.Do(target.GetHTTPRequestByRequest())
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	response := aggregate.NewHTTPResponseByResponse(res)
+	fmt.Println(target.Info.URL.String(), response.Info.Status)
 }
