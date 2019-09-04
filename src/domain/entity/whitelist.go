@@ -1,6 +1,8 @@
 package entity
 
-import "regexp"
+import (
+	"regexp"
+)
 
 //WhiteList はHostのWhiteListを管理するmodel
 type WhiteList struct {
@@ -36,12 +38,13 @@ func (w *WhiteList) Del(i int) bool {
 		return true
 	}
 	switch i {
+
 	case 0:
 		w.Strings = w.Strings[i+1:]
 		w.List = w.List[i+1:]
 	case len(w.List) - 1:
-		w.Strings = w.Strings[:len(w.Strings)-2]
-		w.List = w.List[:len(w.List)-2]
+		w.Strings = w.Strings[:len(w.Strings)-1]
+		w.List = w.List[:len(w.List)-1]
 	default:
 		w.Strings = append(w.Strings[:i], w.Strings[i+1:]...)
 		w.List = append(w.List[:i], w.List[i+1:]...)

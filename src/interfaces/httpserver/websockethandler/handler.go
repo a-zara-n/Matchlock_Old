@@ -3,6 +3,7 @@ package websockethandler
 import (
 	"encoding/json"
 	"log"
+	"net/http"
 	"strconv"
 	"time"
 
@@ -56,7 +57,11 @@ func NewWebSocketHandler(c *config.HTTPServerChannel, ws usecase.WebSocketUsecas
 	}
 }
 
-var upgrader = &websocket.Upgrader{}
+var upgrader = &websocket.Upgrader{
+	CheckOrigin: func(r *http.Request) bool {
+		return true
+	},
+}
 
 func (ws *webSocketHandler) ServeHTTP(cont echo.Context) error {
 	socket, err := upgrader.Upgrade(cont.Response(), cont.Request(), nil)
@@ -96,6 +101,7 @@ func (ws *webSocketHandler) Run() {
 				i, _ := strconv.Atoi(msg.Data)
 				res, _ := json.Marshal(WSresponse{Data: ws.usecase.DiffHistory(i)})
 				ws.distribution(WebSocketRequest{Type: "History", Data: string(res)})
+				log.Println("res")
 			}
 		case r := <-ws.channel.Request:
 			log.Println("リクエストを受信しました")
@@ -107,7 +113,7 @@ func (ws *webSocketHandler) Run() {
 func (ws *webSocketHandler) asynchronousSocketMethod() {
 	time.Sleep(5 * time.Second)
 	for {
-		time.Sleep(1 * time.Second)
+		time.Sleep(2 * time.Second)
 		go ws.distribution(WebSocketRequest{Type: "HistoryCount", Data: ""})
 	}
 }

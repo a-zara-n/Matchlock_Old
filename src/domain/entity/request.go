@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
@@ -46,7 +47,12 @@ func (ri *RequestInfo) SetStatusLine(startline string) {
 	ri.Method = sline[0]
 	ri.Proto = sline[2]
 	ri.Path = pathandquery[0]
+
+	if ri.URL == nil {
+		ri.URL = &url.URL{}
+	}
 	if len(pathandquery) == 2 && len(pathandquery[1]) > 0 {
+		fmt.Println("hoge")
 		ri.URL.RawQuery = pathandquery[1]
 		ri.Query.SetData(pathandquery[1])
 	}

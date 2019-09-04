@@ -1,8 +1,6 @@
 package datastore
 
 import (
-	"fmt"
-
 	"github.com/a-zara-n/Matchlock/src/config"
 	"github.com/a-zara-n/Matchlock/src/domain/repository"
 	"github.com/jinzhu/gorm"
@@ -48,7 +46,6 @@ func (hh *HTTPHistory) Fetch(i int) []repository.HTTPHistoryDefinitionJSON {
 		Joins(requestDataTable).
 		Where("id >= ?", i).
 		Find(&historys)
-	fmt.Println(historys)
 	return historys
 }
 
