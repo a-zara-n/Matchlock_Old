@@ -2,9 +2,7 @@ package service
 
 import (
 	"fmt"
-	"log"
 	"net/http"
-	"net/http/cookiejar"
 
 	"github.com/a-zara-n/Matchlock/src/domain/entity"
 
@@ -27,21 +25,14 @@ type Scanner struct {
 	Targets []*aggregate.Request
 	Payload value.Payload
 	request repository.RequestRepositry
-	client  http.Client
+	client  entity.Client
 }
 
 //NewScanner はScannerを定義します
 func NewScanner(req repository.RequestRepositry) ScannerInterface {
-	jar, _ := cookiejar.New(nil)
-	c := http.Client{
-		Jar: jar,
-		CheckRedirect: func(req *http.Request, via []*http.Request) error {
-			return http.ErrUseLastResponse
-		},
-	}
 	return &Scanner{
 		request: req,
-		client:  c,
+		client:  entity.NewClient(),
 	}
 }
 
@@ -95,31 +86,27 @@ Payload : 名前の通り取得したpayload valuesをentityで渡す
 */
 //All はscan types all の動作を定義した関数
 func (scan *Scanner) AllChange(target *aggregate.Request, names []string, defaultV map[string]interface{}, payloads value.Payload) {
-	data := entity.Data{
-		Type: target.Data.Type,
-		Data: defaultV,
-	}
+	data := newData(target.Data.Type, defaultV)
 	for _, d := range payloads.GetPayload() {
 		for _, nm := range names {
 			data.Data[nm] = d
 			target.Data = &data
-			//scan.clientRun(target)
+			resp := scan.clientRun(target.GetHTTPRequestByRequest())
+			fmt.Println(resp.Body.GetLength())
 		}
 	}
 }
 
 //SimpleList はAllと同じくscan types のsimplelistを定義した関数
 func (scan *Scanner) SimpleList(target *aggregate.Request, names []string, defaultV map[string]interface{}, payloads value.Payload) {
-	data := entity.Data{
-		Type: target.Data.Type,
-		Data: defaultV,
-	}
+	data := newData(target.Data.Type, defaultV)
 	for _, nm := range names {
 		tmp := data.Data[nm]
 		for _, d := range payloads.GetPayload() {
 			data.Data[nm] = d
 			target.Data = &data
-			//scan.clientRun(target)
+			resp := scan.clientRun(target.GetHTTPRequestByRequest())
+			fmt.Println(resp.Body.GetLength())
 		}
 		data.Data[nm] = tmp
 	}
@@ -127,10 +114,7 @@ func (scan *Scanner) SimpleList(target *aggregate.Request, names []string, defau
 
 //Cluster は
 func (scan *Scanner) Cluster(target *aggregate.Request, names []string, defaultV map[string]interface{}, payloads value.Payload) {
-	data := entity.Data{
-		Type: target.Data.Type,
-		Data: defaultV,
-	}
+	data := newData(target.Data.Type, defaultV)
 	var recursive func(length int, i int, m entity.Data)
 	recursive = func(length int, i int, m entity.Data) {
 		//a.Request.Close = true
@@ -141,18 +125,21 @@ func (scan *Scanner) Cluster(target *aggregate.Request, names []string, defaultV
 			}
 		} else {
 			target.Data = &data
-			//scan.clientRun(target)
+			resp := scan.clientRun(target.GetHTTPRequestByRequest())
+			fmt.Println(resp.Body.GetLength())
 		}
 	}
 	recursive(len(names), 0, data)
 }
 
-func (scan *Scanner) clientRun(target *aggregate.Request) {
-	res, err := scan.client.Do(target.GetHTTPRequestByRequest())
-	if err != nil {
-		log.Println(err)
-		return
+func (scan *Scanner) clientRun(req *http.Request) *aggregate.Response {
+	resp, err := scan.client.Sender(req)
+	if err == nil {
+		return aggregate.NewHTTPResponseByResponse(resp)
 	}
-	response := aggregate.NewHTTPResponseByResponse(res)
-	fmt.Println(target.Info.URL.String(), response.Info.Status)
+	return nil
+}
+
+func newData(contenttype string, value map[string]interface{}) entity.Data {
+	return entity.Data{Type: contenttype, Data: value}
 }
