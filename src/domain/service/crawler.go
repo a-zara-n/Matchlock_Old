@@ -54,23 +54,22 @@ func (craw *Crawler) Run(depth int) {
 }
 
 var (
-	reqHost *regexp.Regexp
-	r1      = regexp.MustCompile(`^(http(s)?|file|data|javascript)?://.*`)
-	r2      = regexp.MustCompile(`^\.(\.)?.*?`)
-	r3      = regexp.MustCompile(`^\/.*?`)
-	r4      = regexp.MustCompile(`^.*\..*$`)
-	r5      = regexp.MustCompile(`.*#.*$`)
-	urlRoot = map[bool]func(val string, ustr string) string{
+	reqHost    *regexp.Regexp
+	schemaRegx = regexp.MustCompile(`^(http(s)?|file|data|javascript)?://.*`)
+	pathRegx   = regexp.MustCompile(`^\.(\.)?.*?`)
+	dotRegx    = regexp.MustCompile(`^\/.*?`)
+	r4         = regexp.MustCompile(`^.*\..*$`)
+	r5         = regexp.MustCompile(`.*#.*$`)
+	urlRoot    = map[bool]func(val string, ustr string) string{
 		false: func(val string, ustr string) string { return nomalizationURLPath(ustr + val) },
 		true:  func(val string, ustr string) string { return nomalizationURLPath(ustr, val) },
 	}
 	ustrTraverse = map[bool]func(val string, ustr string) string{
-		false: func(val string, ustr string) string { return urlRoot[r3.MatchString(val)](val, ustr) },
+		false: func(val string, ustr string) string { return urlRoot[dotRegx.MatchString(val)](val, ustr) },
 		true:  func(val string, ustr string) string { return nomalizationURLPath(ustr + "/" + val) },
 	}
-	// schema
 	urlCOrrection = map[bool]func(val string, ustr string) string{
-		false: func(val string, ustr string) string { return ustrTraverse[r2.MatchString(val)](val, ustr) },
+		false: func(val string, ustr string) string { return ustrTraverse[pathRegx.MatchString(val)](val, ustr) },
 		true:  func(val string, ustr string) string { return val },
 	}
 )
@@ -146,7 +145,7 @@ func (c *crawlingdata) resstr(d *html.Node) {
 			}
 			u.Path = strings.Join(ps, "/")
 			fmt.Println(u.String(), "  :   ", v.Val)
-			urlstring, _ := url.QueryUnescape(urlCOrrection[r1.MatchString(v.Val)](v.Val, u.String()))
+			urlstring, _ := url.QueryUnescape(urlCOrrection[schemaRegx.MatchString(v.Val)](v.Val, u.String()))
 			u, _ = url.Parse(urlstring)
 			if !crawlinglist.Find("GET "+urlstring) && reqHost.MatchString(urlstring) {
 				c.Chiled[urlstring] = map[string]crawlingdata{"GET": {Method: "GET", URL: u, Parent: c}}
